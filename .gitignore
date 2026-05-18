@@ -34,3 +34,7 @@ rift-*.tar
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/
+
+# Ignore nested build artifacts for smoke-test example apps.
+/examples/**/_build/
+/examples/**/deps/

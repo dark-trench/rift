@@ -8,7 +8,6 @@
 import Config
 
 config :rift,
-  ecto_repos: [Rift.Repo],
   generators: [timestamp_type: :utc_datetime]
 
 # Configures the endpoint

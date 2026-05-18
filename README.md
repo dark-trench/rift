@@ -22,17 +22,38 @@ Read the planning document:
 
 - [PLAN.md](PLAN.md)
 
+## Embedding
+
+Rift is built as an embeddable Phoenix package. The host app owns its Ecto repo,
+auth, actors, tenancy, case types, workflow modules, selectable values, file
+storage, and side effects.
+
+Configure the host repo:
+
+```elixir
+config :rift, repo: MyApp.Repo
+```
+
+Define host case types with `use Rift.CaseType` and expose host-owned context
+through a `Rift.Resolver` implementation.
+
 ## Development
 
-Rift is a Phoenix 1.8 application.
+Rift uses Phoenix and LiveView internally, but it should be mounted inside a
+host Phoenix application rather than operated as a standalone app.
 
 ```sh
 mix setup
-mix phx.server
 ```
 
 Before opening a pull request, run:
 
 ```sh
 mix precommit
+```
+
+To smoke test Rift as a dependency mounted inside a host app, run:
+
+```sh
+mix example.smoke
 ```

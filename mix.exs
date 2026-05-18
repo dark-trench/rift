@@ -11,6 +11,7 @@ defmodule Rift.MixProject do
       description: description(),
       source_url: "https://github.com/dark-trench/rift",
       homepage_url: "https://github.com/dark-trench/rift",
+      package: package(),
       aliases: aliases(),
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
@@ -19,6 +20,7 @@ defmodule Rift.MixProject do
         "coveralls.detail": :test,
         "coveralls.html": :test,
         "coveralls.json": :test,
+        "example.smoke": :test,
         precommit: :test
       ],
       dialyzer: [
@@ -52,6 +54,17 @@ defmodule Rift.MixProject do
 
   defp description do
     "Phoenix LiveView ops inbox for human workflow decisions."
+  end
+
+  defp package do
+    [
+      name: "rift",
+      licenses: ["Apache-2.0"],
+      files: ~w(lib priv assets examples .formatter.exs mix.exs README* PLAN* LICENSE*),
+      links: %{
+        "GitHub" => "https://github.com/dark-trench/rift"
+      }
+    ]
   end
 
   # Specifies your project dependencies.
@@ -106,6 +119,10 @@ defmodule Rift.MixProject do
       setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
+      "example.smoke": [
+        "cmd --cd examples/standalone mix deps.get",
+        "cmd --cd examples/standalone mix test"
+      ],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["compile", "tailwind rift", "esbuild rift"],
