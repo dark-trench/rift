@@ -2,6 +2,7 @@ defmodule RiftStandaloneExample.Router do
   @moduledoc false
 
   use Phoenix.Router, helpers: false
+  use Rift.Router
 
   pipeline :browser do
     plug(:accepts, ["html"])
@@ -14,5 +15,11 @@ defmodule RiftStandaloneExample.Router do
     pipe_through(:browser)
 
     get("/", PageController, :home)
+  end
+
+  scope "/" do
+    pipe_through(:browser)
+
+    rift("/rift", otp_app: :rift_standalone_example, resolver: RiftStandaloneExample.Resolver)
   end
 end

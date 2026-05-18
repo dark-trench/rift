@@ -16,6 +16,14 @@ defmodule RiftStandaloneExample.SmokeTest do
     assert conn.resp_body =~ "Access change"
   end
 
+  test "mounts Rift through the host router" do
+    conn = get(build_conn(), "/rift")
+
+    assert html_response(conn, 200) =~ "Rift"
+    assert conn.resp_body =~ "Example Operator"
+    assert conn.resp_body =~ "Access change"
+  end
+
   test "configures Rift to use the host repository" do
     assert Rift.Repo.get() == RiftStandaloneExample.Repo
   end
