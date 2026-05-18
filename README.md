@@ -51,3 +51,9 @@ Before opening a pull request, run:
 ```sh
 mix precommit
 ```
+
+To smoke test Rift as a dependency mounted inside a host app, run:
+
+```sh
+mix example.smoke
+```

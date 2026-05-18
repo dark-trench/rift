@@ -20,6 +20,7 @@ defmodule Rift.MixProject do
         "coveralls.detail": :test,
         "coveralls.html": :test,
         "coveralls.json": :test,
+        "example.smoke": :test,
         precommit: :test
       ],
       dialyzer: [
@@ -59,7 +60,7 @@ defmodule Rift.MixProject do
     [
       name: "rift",
       licenses: ["Apache-2.0"],
-      files: ~w(lib priv assets .formatter.exs mix.exs README* PLAN* LICENSE*),
+      files: ~w(lib priv assets examples .formatter.exs mix.exs README* PLAN* LICENSE*),
       links: %{
         "GitHub" => "https://github.com/dark-trench/rift"
       }
@@ -118,6 +119,10 @@ defmodule Rift.MixProject do
       setup: ["deps.get", "ecto.setup", "assets.setup", "assets.build"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
+      "example.smoke": [
+        "cmd --cd examples/standalone mix deps.get",
+        "cmd --cd examples/standalone mix test"
+      ],
       test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["compile", "tailwind rift", "esbuild rift"],
