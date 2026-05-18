@@ -1,0 +1,45 @@
+<Layouts.app flash={@flash}>
+  <section class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+    <div class="space-y-6">
+      <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">
+        LiveView ops inbox
+      </p>
+      <div class="space-y-4">
+        <h1 class="max-w-3xl text-4xl font-semibold tracking-normal text-slate-950 sm:text-5xl">
+          Rift coordinates human decisions for durable workflows.
+        </h1>
+        <p class="max-w-2xl text-base leading-7 text-slate-600">
+          A Phoenix foundation for embeddable case intake, operator review,
+          ownership, audit history, and Squid Mesh workflow handoffs.
+        </p>
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+        <div>
+          <p class="text-sm font-semibold text-slate-950">Foundation</p>
+          <p class="text-sm text-slate-500">Phoenix {Application.spec(:phoenix, :vsn)}</p>
+        </div>
+        <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
+          ready
+        </span>
+      </div>
+
+      <dl class="mt-5 grid gap-4 text-sm">
+        <div class="flex items-center justify-between">
+          <dt class="text-slate-500">Runtime</dt>
+          <dd class="font-medium text-slate-950">Phoenix + LiveView</dd>
+        </div>
+        <div class="flex items-center justify-between">
+          <dt class="text-slate-500">Database</dt>
+          <dd class="font-medium text-slate-950">PostgreSQL</dd>
+        </div>
+        <div class="flex items-center justify-between">
+          <dt class="text-slate-500">Quality gate</dt>
+          <dd class="font-medium text-slate-950">mix precommit</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+</Layouts.app>

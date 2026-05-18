@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a Question or Start a Discussion
+    url: https://github.com/dark-trench/rift/discussions
+    about: Have questions, ideas, or want to discuss Rift? Start a conversation in Discussions.
+  - name: Documentation
+    url: https://github.com/dark-trench/rift#readme
+    about: Read the project overview and planning notes.
