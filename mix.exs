@@ -11,6 +11,7 @@ defmodule Rift.MixProject do
       description: description(),
       source_url: "https://github.com/dark-trench/rift",
       homepage_url: "https://github.com/dark-trench/rift",
+      package: package(),
       aliases: aliases(),
       deps: deps(),
       test_coverage: [tool: ExCoveralls],
@@ -52,6 +53,17 @@ defmodule Rift.MixProject do
 
   defp description do
     "Phoenix LiveView ops inbox for human workflow decisions."
+  end
+
+  defp package do
+    [
+      name: "rift",
+      licenses: ["Apache-2.0"],
+      files: ~w(lib priv assets .formatter.exs mix.exs README* PLAN* LICENSE*),
+      links: %{
+        "GitHub" => "https://github.com/dark-trench/rift"
+      }
+    ]
   end
 
   # Specifies your project dependencies.
