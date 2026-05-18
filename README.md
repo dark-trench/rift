@@ -1,5 +1,8 @@
 <div align="center">
   <h2>Rift—LiveView ops inbox for human workflow decisions</h2>
+  
+  <img width="300" alt="rift-logo" src="https://github.com/user-attachments/assets/5ed2212b-e241-4533-b02e-a32fd151bd0f" />
+
   <p>
     <a href="https://github.com/dark-trench/rift/blob/main/LICENSE">
       <img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" />
