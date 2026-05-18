@@ -21,3 +21,18 @@ details through SquidSonar.
 Read the planning document:
 
 - [PLAN.md](PLAN.md)
+
+## Development
+
+Rift is a Phoenix 1.8 application.
+
+```sh
+mix setup
+mix phx.server
+```
+
+Before opening a pull request, run:
+
+```sh
+mix precommit
+```
