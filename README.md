@@ -1,4 +1,11 @@
-# Rift
+<div align="center">
+  <h2>Rift—LiveView ops inbox for human workflow decisions</h2>
+  <p>
+    <a href="https://github.com/ccarvalho-eng/rift/blob/main/LICENSE">
+      <img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" />
+    </a>
+  </p>
+</div>
 
 Rift gives Phoenix apps a configurable LiveView ops inbox for workflows that
 need human decisions.
@@ -11,4 +18,3 @@ details through SquidSonar.
 Read the planning document:
 
 - [PLAN.md](PLAN.md)
-
