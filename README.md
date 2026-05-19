@@ -5,12 +5,12 @@
 
   <p>
     <a href="https://github.com/dark-trench/rift/actions/workflows/ci.yml">
-      <img alt="CI" src="https://github.com/dark-trench/rift/actions/workflows/ci.yml/badge.svg" />
+      <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/dark-trench/rift/ci.yml?branch=main&label=ci" />
     </a>
-    <img alt="Elixir: ~> 1.18" src="https://img.shields.io/badge/elixir-%7E%3E%201.18-4B275F.svg" />
-    <img alt="Phoenix: ~> 1.8" src="https://img.shields.io/badge/phoenix-%7E%3E%201.8-FD4F00.svg" />
+    <img alt="Elixir 1.18+" src="https://img.shields.io/badge/elixir-1.18%2B-4B275F" />
+    <img alt="Phoenix 1.8+" src="https://img.shields.io/badge/phoenix-1.8%2B-FD4F00" />
     <a href="https://github.com/dark-trench/rift/blob/main/LICENSE">
-      <img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" />
+      <img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache--2.0-blue" />
     </a>
   </p>
 </div>
