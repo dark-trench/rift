@@ -123,6 +123,13 @@ defmodule RiftStandaloneExample.SmokeTest do
 
     assert Repo.aggregate(Case, :count) == 1
     assert Repo.aggregate(Event, :count) == 1
+
+    conn = get(build_conn(), "/rift")
+
+    assert html_response(conn, 200) =~ "Access change"
+    assert conn.resp_body =~ "open"
+    assert conn.resp_body =~ "admin"
+    refute conn.resp_body =~ "Inbox clear"
   end
 
   test "serves the standalone stylesheet" do

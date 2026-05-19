@@ -4,6 +4,7 @@ defmodule RiftWeb.InboxLive do
   use RiftWeb, :live_view
 
   alias Rift.CaseCatalog
+  alias Rift.Cases
   alias Rift.Resolver
 
   embed_templates "inbox_live/*"
@@ -25,6 +26,8 @@ defmodule RiftWeb.InboxLive do
         catalog_open?: false,
         case_type_count: length(case_type_entries),
         case_type_entries: case_type_entries,
+        inbox_cases: [],
+        inbox_count: 0,
         prefix: Map.fetch!(session, "prefix"),
         resolver: resolver,
         selected_case_entry: nil,
@@ -35,16 +38,23 @@ defmodule RiftWeb.InboxLive do
   end
 
   @impl Phoenix.LiveView
+  def handle_params(_params, _uri, socket) do
+    {:noreply, assign_inbox_cases(socket)}
+  end
+
+  @impl Phoenix.LiveView
   def render(assigns), do: index(assigns)
 
   @impl Phoenix.LiveView
   def handle_event("show_view", %{"view" => view}, socket) do
     socket =
-      assign(socket,
+      socket
+      |> assign(
         active_view: active_view(view),
         catalog_open?: false,
         selected_case_entry: nil
       )
+      |> maybe_assign_inbox_cases()
 
     {:noreply, socket}
   end
@@ -69,15 +79,31 @@ defmodule RiftWeb.InboxLive do
   defp actor_ref(%{id: id}), do: id
   defp actor_ref(actor), do: actor
 
+  defp assign_inbox_cases(socket) do
+    inbox_cases =
+      Cases.list_inbox_cases(%{
+        case_types: Enum.map(socket.assigns.case_type_entries, & &1.case_type),
+        tenant_key: socket.assigns.tenant_key
+      })
+
+    assign(socket, inbox_cases: inbox_cases, inbox_count: length(inbox_cases))
+  end
+
+  defp maybe_assign_inbox_cases(%{assigns: %{active_view: :inbox}} = socket),
+    do: assign_inbox_cases(socket)
+
+  defp maybe_assign_inbox_cases(socket), do: socket
+
   defp active_view("catalog"), do: :catalog
   defp active_view(_view), do: :inbox
 
   defp active_view_label(:catalog), do: "Workflow catalog"
   defp active_view_label(:inbox), do: "Human review queue"
 
-  defp active_view_title(:catalog, nil), do: "Case catalog"
-  defp active_view_title(:catalog, entry), do: entry.title
-  defp active_view_title(:inbox, _entry), do: "No open cases"
+  defp active_view_title(:catalog, nil, _inbox_count), do: "Case catalog"
+  defp active_view_title(:catalog, entry, _inbox_count), do: entry.title
+  defp active_view_title(:inbox, _entry, 0), do: "No open cases"
+  defp active_view_title(:inbox, _entry, _inbox_count), do: "Operator inbox"
 
   defp nav_item_class(active_view, active_view), do: "rift-nav-item rift-nav-item-active"
   defp nav_item_class(_active_view, _view), do: "rift-nav-item"
@@ -93,4 +119,7 @@ defmodule RiftWeb.InboxLive do
 
   defp case_type_count_label(1), do: "1 type"
   defp case_type_count_label(count), do: "#{count} types"
+
+  defp inbox_count_label(1), do: "1 case"
+  defp inbox_count_label(count), do: "#{count} cases"
 end

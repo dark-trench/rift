@@ -173,4 +173,37 @@ defmodule Rift.CasesTest do
       assert Rift.Repo.get().aggregate(Event, :count) == 0
     end
   end
+
+  describe "list_inbox_cases/1" do
+    test "lists open cases for the tenant and available case types" do
+      assert {:ok, access_case} =
+               Cases.open_case(%{
+                 tenant_key: "tenant-1",
+                 type: "access_change",
+                 subject: "Access change",
+                 team: "identity",
+                 opened_by_ref: "originator-1"
+               })
+
+      assert {:ok, _other_tenant_case} =
+               Cases.open_case(%{
+                 tenant_key: "tenant-2",
+                 type: "access_change",
+                 subject: "Other tenant",
+                 opened_by_ref: "originator-2"
+               })
+
+      assert {:ok, _other_type_case} =
+               Cases.open_case(%{
+                 tenant_key: "tenant-1",
+                 type: "vendor_onboarding",
+                 subject: "Vendor onboarding",
+                 opened_by_ref: "originator-3"
+               })
+
+      assert Cases.list_inbox_cases(%{tenant_key: "tenant-1", case_types: [AccessChange]}) == [
+               access_case
+             ]
+    end
+  end
 end
