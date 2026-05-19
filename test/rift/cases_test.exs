@@ -5,6 +5,39 @@ defmodule Rift.CasesTest do
   alias Rift.Cases.Case
   alias Rift.Cases.Event
 
+  defmodule Resolver do
+  end
+
+  defmodule AccessChange do
+    use Rift.CaseType
+
+    case_type do
+      type :access_change
+      title "Access change"
+      description "Ask an operator to review an access change."
+      team "identity"
+      workflow Rift.CasesTest.Workflow
+      trigger :submit
+
+      fields do
+        field :target_user_id, :text, label: "User", required: true
+        field :reason, :textarea, label: "Reason", required: true
+      end
+    end
+
+    @impl true
+    def build_payload(attrs, ctx) do
+      %{
+        opened_by: ctx.actor.id,
+        reason: attrs.reason,
+        target_user_id: attrs.target_user_id
+      }
+    end
+  end
+
+  defmodule Workflow do
+  end
+
   describe "open_case/1" do
     test "persists a case and case_opened event atomically" do
       attrs = %{
@@ -80,6 +113,64 @@ defmodule Rift.CasesTest do
       assert {:ok, %Case{} = rift_case} = Cases.open_case(attrs)
       assert rift_case.status == "open"
       assert rift_case.details == %{"role" => "admin"}
+    end
+  end
+
+  describe "open_case/4" do
+    test "opens a case from a host case type and submitted form params" do
+      assert {:ok, %Case{} = rift_case} =
+               Cases.open_case(
+                 AccessChange,
+                 %{
+                   "target_user_id" => "user-ada",
+                   "reason" => "Need production access"
+                 },
+                 %{
+                   actor: %{id: "originator-1"},
+                   tenant_key: "tenant-1"
+                 },
+                 Resolver
+               )
+
+      assert rift_case.type == "access_change"
+      assert rift_case.subject == "Access change"
+      assert rift_case.status == "open"
+      assert rift_case.team == "identity"
+      assert rift_case.opened_by_ref == "originator-1"
+      assert rift_case.tenant_key == "tenant-1"
+      assert rift_case.squid_mesh_run_id == nil
+
+      assert rift_case.details == %{
+               "opened_by" => "originator-1",
+               "reason" => "Need production access",
+               "target_user_id" => "user-ada"
+             }
+
+      assert [event] = Rift.Repo.get().all(Event)
+      assert event.case_id == rift_case.id
+      assert event.type == "case_opened"
+      assert event.actor_ref == "originator-1"
+      assert event.tenant_key == "tenant-1"
+      assert event.visible_to_originator
+
+      assert event.data == %{
+               "subject" => "Access change",
+               "type" => "access_change"
+             }
+    end
+
+    test "does not persist a case when generic form validation fails" do
+      assert {:error, form} =
+               Cases.open_case(
+                 AccessChange,
+                 %{"target_user_id" => ""},
+                 %{actor: %{id: "originator-1"}, tenant_key: "tenant-1"},
+                 Resolver
+               )
+
+      assert form.errors == %{reason: "can't be blank", target_user_id: "can't be blank"}
+      assert Rift.Repo.get().aggregate(Case, :count) == 0
+      assert Rift.Repo.get().aggregate(Event, :count) == 0
     end
   end
 end

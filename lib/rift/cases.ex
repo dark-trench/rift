@@ -3,6 +3,7 @@ defmodule Rift.Cases do
   Persistence boundary for Rift cases and case timeline events.
   """
 
+  alias Rift.CaseForm
   alias Rift.Cases.Case
   alias Rift.Cases.Event
   alias Rift.Repo
@@ -33,6 +34,27 @@ defmodule Rift.Cases do
     end
   end
 
+  @doc """
+  Opens a case from a host-defined case type and submitted form params.
+  """
+  @spec open_case(module(), map(), map(), module()) :: {:ok, Case.t()} | {:error, term()}
+  def open_case(case_type, params, ctx, resolver)
+      when is_atom(case_type) and is_map(params) and is_map(ctx) and is_atom(resolver) do
+    form =
+      case_type
+      |> CaseForm.new(resolver, Map.fetch!(ctx, :actor))
+      |> CaseForm.submit(params, ctx)
+
+    case form do
+      {:ok, submitted_form} ->
+        attrs = case_type_open_attrs(case_type, submitted_form.payload, ctx)
+        open_case(attrs)
+
+      {:error, invalid_form} ->
+        {:error, invalid_form}
+    end
+  end
+
   defp insert_case(repo, attrs) do
     case repo.insert(Case.changeset(%Case{}, attrs)) do
       {:ok, rift_case} -> {:ok, rift_case}
@@ -55,6 +77,17 @@ defmodule Rift.Cases do
     end
   end
 
+  defp case_type_open_attrs(case_type, payload, ctx) do
+    %{
+      details: stringify_keys(payload),
+      opened_by_ref: actor_ref(Map.fetch!(ctx, :actor)),
+      subject: case_type.title(),
+      team: optional_value(case_type, :team),
+      tenant_key: Map.get(ctx, :tenant_key),
+      type: Atom.to_string(case_type.type())
+    }
+  end
+
   defp case_opened_attrs(rift_case) do
     %{
       case_id: rift_case.id,
@@ -68,4 +101,24 @@ defmodule Rift.Cases do
       visible_to_originator: true
     }
   end
+
+  defp actor_ref(%{id: id}), do: to_string(id)
+  defp actor_ref(actor), do: to_string(actor)
+
+  defp optional_value(module, callback) do
+    if function_exported?(module, callback, 0) do
+      apply(module, callback, [])
+    end
+  end
+
+  defp stringify_keys(value) when is_map(value) do
+    Map.new(value, fn {key, value} -> {string_key(key), stringify_keys(value)} end)
+  end
+
+  defp stringify_keys(value) when is_list(value), do: Enum.map(value, &stringify_keys/1)
+  defp stringify_keys(value), do: value
+
+  defp string_key(key) when is_atom(key), do: Atom.to_string(key)
+  defp string_key(key) when is_binary(key), do: key
+  defp string_key(key), do: to_string(key)
 end
