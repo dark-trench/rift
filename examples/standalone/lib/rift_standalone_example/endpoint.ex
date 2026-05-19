@@ -5,6 +5,13 @@ defmodule RiftStandaloneExample.Endpoint do
 
   socket("/live", Phoenix.LiveView.Socket)
 
+  plug(Plug.Static,
+    at: "/",
+    from: :rift_standalone_example,
+    gzip: false,
+    only: ~w(assets favicon.ico robots.txt)
+  )
+
   plug(Plug.Session,
     store: :cookie,
     key: "_rift_standalone_example_key",

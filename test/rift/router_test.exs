@@ -67,6 +67,8 @@ defmodule Rift.RouterTest do
 
     assert session_opts[:session] ==
              {Rift.Router, :__session__, ["/ops/rift", :rift, TestResolver]}
+
+    assert session_opts[:root_layout] == {RiftWeb.Layouts, :root}
   end
 
   test "__session__/4 resolves host context through the configured resolver" do

@@ -20,8 +20,15 @@ defmodule RiftStandaloneExample.SmokeTest do
     conn = get(build_conn(), "/rift")
 
     assert html_response(conn, 200) =~ "Rift"
+    assert conn.resp_body =~ ~s(href="/assets/css/app.css")
     assert conn.resp_body =~ "Example Operator"
     assert conn.resp_body =~ "Access change"
+  end
+
+  test "serves the standalone stylesheet" do
+    conn = get(build_conn(), "/assets/css/app.css")
+
+    assert response(conn, 200) =~ ".rift-shell"
   end
 
   test "configures Rift to use the host repository" do

@@ -1,5 +1,7 @@
 import Config
 
+config :logger, level: :info
+
 config :rift_standalone_example, RiftStandaloneExample.Repo,
   username: "postgres",
   password: "postgres",
@@ -14,6 +16,7 @@ config :rift_standalone_example, RiftStandaloneExample.Endpoint,
   check_origin: false,
   code_reloader: false,
   debug_errors: true,
-  secret_key_base: "LOCAL_DEV_SECRET_PLEASE_CHANGE_IN_PROD",
+  secret_key_base:
+    "LOCAL_DEV_SECRET_PLEASE_CHANGE_IN_PROD_LOCAL_DEV_SECRET_PLEASE_CHANGE_IN_PROD",
   server: true,
   watchers: []

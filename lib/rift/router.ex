@@ -58,7 +58,8 @@ defmodule Rift.Router do
     session_name = Keyword.get(opts, :as, :rift)
 
     session_opts = [
-      session: {__MODULE__, :__session__, [prefix, otp_app, resolver]}
+      session: {__MODULE__, :__session__, [prefix, otp_app, resolver]},
+      root_layout: {RiftWeb.Layouts, :root}
     ]
 
     {session_name, session_opts, as: session_name}
