@@ -5,6 +5,8 @@ defmodule RiftStandaloneExample.SmokeTest do
   import Phoenix.LiveViewTest
 
   alias RiftStandaloneExample.CaseTypes.AccessChange
+  alias RiftStandaloneExample.CaseTypes.DataExport
+  alias RiftStandaloneExample.CaseTypes.VendorOnboarding
   alias RiftStandaloneExample.Resolver
 
   @endpoint RiftStandaloneExample.Endpoint
@@ -31,6 +33,7 @@ defmodule RiftStandaloneExample.SmokeTest do
     assert conn.resp_body =~ "Example Operator"
     assert conn.resp_body =~ "Catalog"
     refute conn.resp_body =~ "Access change"
+    refute conn.resp_body =~ "Vendor onboarding"
   end
 
   test "opens and selects case types from the embedded sidebar" do
@@ -47,6 +50,8 @@ defmodule RiftStandaloneExample.SmokeTest do
 
     assert html =~ ~s(class="rift-sidebar-list")
     assert html =~ "Access change"
+    assert html =~ "Vendor onboarding"
+    assert html =~ "Data export"
     assert html =~ "No open cases"
     refute html =~ "Request an operator review before changing access."
 
@@ -59,6 +64,31 @@ defmodule RiftStandaloneExample.SmokeTest do
     assert html =~ "Access change"
     assert html =~ "Request an operator review before changing access."
     assert html =~ "admin"
+    assert html =~ "Prepare request"
+    assert html =~ "User"
+    assert html =~ "Role"
+    assert html =~ "Reason"
+
+    html =
+      view
+      |> form(".rift-originator-form", case_form: %{})
+      |> render_submit()
+
+    assert html =~ "can&#39;t be blank"
+
+    html =
+      view
+      |> form(".rift-originator-form",
+        case_form: %{
+          "target_user_id" => "user-ada",
+          "role" => "admin",
+          "reason" => "Coverage"
+        }
+      )
+      |> render_submit()
+
+    assert html =~ "Request ready"
+    assert html =~ "Access change"
   end
 
   test "serves the standalone stylesheet" do
@@ -88,11 +118,16 @@ defmodule RiftStandaloneExample.SmokeTest do
 
     assert Resolver.resolve_tenant(actor) == "example"
     assert Resolver.resolve_access(actor) == :operator
-    assert Resolver.resolve_case_types(actor) == [AccessChange]
+    assert Resolver.resolve_case_types(actor) == [AccessChange, VendorOnboarding, DataExport]
 
     assert Resolver.resolve_select_options(actor, AccessChange, :target_user_id) == [
              {"Ada Lovelace", "user-ada"},
              {"Grace Hopper", "user-grace"}
+           ]
+
+    assert Resolver.resolve_select_options(actor, VendorOnboarding, :business_owner_id) == [
+             {"Katherine Johnson", "user-katherine"},
+             {"Dorothy Vaughan", "user-dorothy"}
            ]
   end
 

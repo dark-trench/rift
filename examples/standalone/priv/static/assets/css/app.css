@@ -424,6 +424,118 @@ body {
   padding: 6px 9px;
 }
 
+.rift-originator-form {
+  border-top: 1px solid var(--rift-rule);
+  padding-top: 18px;
+  display: grid;
+  gap: 16px;
+}
+
+.rift-form-fields {
+  display: grid;
+  gap: 14px;
+}
+
+.rift-form-field {
+  display: grid;
+  gap: 7px;
+}
+
+.rift-form-field > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--rift-heading);
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.rift-form-field em {
+  color: var(--rift-soft);
+  font-size: 0.7rem;
+  font-style: normal;
+  font-weight: 760;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.rift-form-field input,
+.rift-form-field select,
+.rift-form-field textarea {
+  width: 100%;
+  border: 1px solid var(--rift-border-strong);
+  border-radius: 6px;
+  background: var(--rift-surface);
+  color: var(--rift-text);
+  font: inherit;
+  font-size: 0.92rem;
+}
+
+.rift-form-field input,
+.rift-form-field select {
+  min-height: 40px;
+  padding: 0 11px;
+}
+
+.rift-form-field textarea {
+  min-height: 94px;
+  padding: 10px 11px;
+  resize: vertical;
+}
+
+.rift-form-field input:focus,
+.rift-form-field select:focus,
+.rift-form-field textarea:focus {
+  border-color: var(--rift-brand);
+  outline: 2px solid color-mix(in srgb, var(--rift-brand) 20%, transparent);
+}
+
+.rift-form-field small {
+  color: var(--rift-muted);
+  font-size: 0.8rem;
+}
+
+.rift-form-field strong {
+  color: #b42318;
+  font-size: 0.8rem;
+}
+
+.rift-form-status {
+  border: 1px solid color-mix(in srgb, var(--rift-brand) 24%, var(--rift-border));
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 3px;
+  background: color-mix(in srgb, var(--rift-brand) 8%, var(--rift-surface));
+}
+
+.rift-form-status strong {
+  color: var(--rift-heading);
+}
+
+.rift-form-status span {
+  color: var(--rift-muted);
+  font-size: 0.88rem;
+}
+
+.rift-primary-action {
+  border: 0;
+  border-radius: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  justify-self: start;
+  background: var(--rift-brand);
+  color: var(--rift-brand-text);
+  font: inherit;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.rift-primary-action:hover {
+  filter: brightness(1.05);
+}
+
 @media (max-width: 760px) {
   body {
     padding: 10px;
