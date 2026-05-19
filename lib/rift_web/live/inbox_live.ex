@@ -5,6 +5,7 @@ defmodule RiftWeb.InboxLive do
 
   alias Phoenix.LiveView.JS
   alias Rift.CaseCatalog
+  alias Rift.CaseForm
   alias Rift.Resolver
 
   @impl Phoenix.LiveView
@@ -17,6 +18,7 @@ defmodule RiftWeb.InboxLive do
     socket =
       assign(socket,
         access: Map.fetch!(session, "access"),
+        actor: actor,
         actor_label:
           Resolver.call_with_fallback(resolver, :resolve_actor_label, [actor_ref(actor)]),
         active_view: :inbox,
@@ -24,6 +26,8 @@ defmodule RiftWeb.InboxLive do
         case_type_count: length(case_type_entries),
         case_type_entries: case_type_entries,
         prefix: Map.fetch!(session, "prefix"),
+        resolver: resolver,
+        selected_case_form: nil,
         selected_case_entry: nil,
         tenant_key: Map.get(session, "tenant_key")
       )
@@ -186,6 +190,62 @@ defmodule RiftWeb.InboxLive do
                   </dd>
                 </div>
               </dl>
+
+              <form
+                :if={@selected_case_form}
+                class="rift-originator-form"
+                phx-change="validate_case_form"
+                phx-submit="submit_case_form"
+              >
+                <div class="rift-form-fields">
+                  <label :for={field <- @selected_case_form.fields} class="rift-form-field">
+                    <span>
+                      {field.label}
+                      <em :if={field.required?}>Required</em>
+                    </span>
+
+                    <select
+                      :if={field.type in [:select, :multi_select]}
+                      name={"case_form[#{field.input_name}]"}
+                    >
+                      <option value="">Select</option>
+                      <option
+                        :for={{label, value} <- field.options}
+                        value={value}
+                        selected={field_value(@selected_case_form, field) == value}
+                      >
+                        {label}
+                      </option>
+                    </select>
+
+                    <textarea
+                      :if={field.type == :textarea}
+                      name={"case_form[#{field.input_name}]"}
+                      placeholder={field.placeholder}
+                    >{field_value(@selected_case_form, field)}</textarea>
+
+                    <input
+                      :if={field.type not in [:select, :multi_select, :textarea]}
+                      type={input_type(field.type)}
+                      name={"case_form[#{field.input_name}]"}
+                      placeholder={field.placeholder}
+                      value={field_value(@selected_case_form, field)}
+                    />
+
+                    <small :if={field.help_text}>{field.help_text}</small>
+                    <strong :if={Map.get(@selected_case_form.errors, field.name)}>
+                      {Map.fetch!(@selected_case_form.errors, field.name)}
+                    </strong>
+                  </label>
+                </div>
+
+                <div :if={@selected_case_form.submitted?} class="rift-form-status">
+                  <strong>Request ready</strong>
+                  <span>{@selected_case_entry.title}</span>
+                </div>
+
+                <button type="submit" class="rift-primary-action">Prepare request</button>
+              </form>
             </div>
           </section>
         </section>
@@ -200,6 +260,7 @@ defmodule RiftWeb.InboxLive do
       assign(socket,
         active_view: active_view(view),
         catalog_open?: false,
+        selected_case_form: nil,
         selected_case_entry: nil
       )
 
@@ -211,14 +272,50 @@ defmodule RiftWeb.InboxLive do
   end
 
   def handle_event("select_case_type", %{"case-type" => case_type_key}, socket) do
+    selected_case_entry = CaseCatalog.select(socket.assigns.case_type_entries, case_type_key)
+
     socket =
       assign(socket,
         active_view: :catalog,
         catalog_open?: true,
-        selected_case_entry: CaseCatalog.select(socket.assigns.case_type_entries, case_type_key)
+        selected_case_form:
+          case_form(selected_case_entry, socket.assigns.resolver, socket.assigns.actor),
+        selected_case_entry: selected_case_entry
       )
 
     {:noreply, socket}
+  end
+
+  def handle_event(
+        "validate_case_form",
+        %{"case_form" => _params},
+        %{assigns: %{selected_case_form: nil}} = socket
+      ) do
+    {:noreply, socket}
+  end
+
+  def handle_event("validate_case_form", %{"case_form" => params}, socket) do
+    {:noreply,
+     assign(socket,
+       selected_case_form: CaseForm.validate(socket.assigns.selected_case_form, params)
+     )}
+  end
+
+  def handle_event(
+        "submit_case_form",
+        %{"case_form" => _params},
+        %{assigns: %{selected_case_form: nil}} = socket
+      ) do
+    {:noreply, socket}
+  end
+
+  def handle_event("submit_case_form", %{"case_form" => params}, socket) do
+    ctx = %{actor: socket.assigns.actor}
+
+    case CaseForm.submit(socket.assigns.selected_case_form, params, ctx) do
+      {:ok, form} -> {:noreply, assign(socket, selected_case_form: form)}
+      {:error, form} -> {:noreply, assign(socket, selected_case_form: form)}
+    end
   end
 
   defp actor_ref(%{id: id}), do: id
@@ -248,4 +345,15 @@ defmodule RiftWeb.InboxLive do
 
   defp case_type_count_label(1), do: "1 type"
   defp case_type_count_label(count), do: "#{count} types"
+
+  defp case_form(nil, _resolver, _actor), do: nil
+  defp case_form(entry, resolver, actor), do: CaseForm.new(entry.case_type, resolver, actor)
+
+  defp field_value(form, field), do: Map.get(form.params, field.input_name, field.value)
+
+  defp input_type(:number), do: "number"
+  defp input_type(:boolean), do: "checkbox"
+  defp input_type(:date), do: "date"
+  defp input_type(:hidden), do: "hidden"
+  defp input_type(_type), do: "text"
 end

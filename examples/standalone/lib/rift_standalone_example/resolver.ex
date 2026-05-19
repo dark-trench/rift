@@ -4,6 +4,8 @@ defmodule RiftStandaloneExample.Resolver do
   @behaviour Rift.Resolver
 
   alias RiftStandaloneExample.CaseTypes.AccessChange
+  alias RiftStandaloneExample.CaseTypes.DataExport
+  alias RiftStandaloneExample.CaseTypes.VendorOnboarding
 
   @impl true
   def resolve_actor(_conn), do: %{id: "operator-1", operator?: true}
@@ -16,11 +18,15 @@ defmodule RiftStandaloneExample.Resolver do
   def resolve_access(_actor), do: :originator
 
   @impl true
-  def resolve_case_types(_actor), do: [AccessChange]
+  def resolve_case_types(_actor), do: [AccessChange, VendorOnboarding, DataExport]
 
   @impl true
   def resolve_select_options(_actor, AccessChange, :target_user_id) do
     [{"Ada Lovelace", "user-ada"}, {"Grace Hopper", "user-grace"}]
+  end
+
+  def resolve_select_options(_actor, VendorOnboarding, :business_owner_id) do
+    [{"Katherine Johnson", "user-katherine"}, {"Dorothy Vaughan", "user-dorothy"}]
   end
 
   def resolve_select_options(_actor, _case_type, _field_name), do: []
