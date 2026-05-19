@@ -3,7 +3,6 @@ defmodule Rift.Cases do
   Persistence boundary for Rift cases and case timeline events.
   """
 
-  alias Ecto.Multi
   alias Rift.Cases.Case
   alias Rift.Cases.Event
   alias Rift.Repo
@@ -17,16 +16,34 @@ defmodule Rift.Cases do
     repo = Repo.get()
     attrs = put_open_status(attrs)
 
-    Multi.new()
-    |> Multi.insert(:case, Case.changeset(%Case{}, attrs))
-    |> Multi.insert(:case_opened, fn %{case: rift_case} ->
-      Event.changeset(%Event{}, case_opened_attrs(rift_case))
-    end)
-    |> repo.transaction()
-    |> case do
-      {:ok, %{case: rift_case}} -> {:ok, rift_case}
-      {:error, :case, changeset, _changes} -> {:error, changeset}
-      {:error, step, reason, _changes} -> {:error, step, reason}
+    result =
+      repo.transaction(fn ->
+        with {:ok, rift_case} <- insert_case(repo, attrs),
+             :ok <- insert_case_opened_event(repo, rift_case) do
+          rift_case
+        else
+          {:error, step, reason} -> repo.rollback({step, reason})
+        end
+      end)
+
+    case result do
+      {:ok, rift_case} -> {:ok, rift_case}
+      {:error, {:case, %Ecto.Changeset{} = changeset}} -> {:error, changeset}
+      {:error, {step, reason}} -> {:error, step, reason}
+    end
+  end
+
+  defp insert_case(repo, attrs) do
+    case repo.insert(Case.changeset(%Case{}, attrs)) do
+      {:ok, rift_case} -> {:ok, rift_case}
+      {:error, %Ecto.Changeset{} = changeset} -> {:error, :case, changeset}
+    end
+  end
+
+  defp insert_case_opened_event(repo, rift_case) do
+    case repo.insert(Event.changeset(%Event{}, case_opened_attrs(rift_case))) do
+      {:ok, _event} -> :ok
+      {:error, %Ecto.Changeset{} = changeset} -> {:error, :case_opened, changeset}
     end
   end
 
