@@ -4,6 +4,11 @@
   <img width="300" alt="rift-logo" src="https://github.com/user-attachments/assets/5ed2212b-e241-4533-b02e-a32fd151bd0f" />
 
   <p>
+    <a href="https://github.com/dark-trench/rift/actions/workflows/ci.yml">
+      <img alt="CI" src="https://github.com/dark-trench/rift/actions/workflows/ci.yml/badge.svg" />
+    </a>
+    <img alt="Elixir: ~> 1.18" src="https://img.shields.io/badge/elixir-%7E%3E%201.18-4B275F.svg" />
+    <img alt="Phoenix: ~> 1.8" src="https://img.shields.io/badge/phoenix-%7E%3E%201.8-FD4F00.svg" />
     <a href="https://github.com/dark-trench/rift/blob/main/LICENSE">
       <img alt="License: Apache 2.0" src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" />
     </a>
@@ -36,6 +41,104 @@ config :rift, repo: MyApp.Repo
 
 Define host case types with `use Rift.CaseType` and expose host-owned context
 through a `Rift.Resolver` implementation.
+
+```elixir
+defmodule MyApp.CaseTypes.AccessChange do
+  use Rift.CaseType
+
+  case_type do
+    type :access_change
+    title "Access change"
+    description "Ask an operator to review an access change before it runs."
+    team "identity"
+    workflow MyApp.Workflows.AccessChange
+    trigger :submit
+
+    fields do
+      field :target_user_id, :select,
+        label: "User",
+        required: true,
+        options: {:resolver, :target_user_id}
+
+      field :role, :select,
+        label: "Role",
+        required: true,
+        options: [{"Operator", "operator"}, {"Admin", "admin"}]
+
+      field :reason, :textarea,
+        label: "Reason",
+        required: true
+    end
+  end
+
+  @impl true
+  def build_payload(attrs, ctx) do
+    %{
+      target_user_id: attrs.target_user_id,
+      role: attrs.role,
+      reason: attrs.reason,
+      opened_by: ctx.actor.id
+    }
+  end
+end
+```
+
+Mount Rift in the host router:
+
+```elixir
+defmodule MyAppWeb.Router do
+  use Phoenix.Router
+  use Rift.Router
+
+  pipeline :browser do
+    plug :accepts, ["html"]
+    plug :fetch_session
+    plug :protect_from_forgery
+    plug :put_secure_browser_headers
+  end
+
+  scope "/" do
+    pipe_through :browser
+
+    rift "/rift", otp_app: :my_app, resolver: MyApp.RiftResolver
+  end
+end
+```
+
+Resolve host-owned actors, tenancy, access, case types, and select options:
+
+```elixir
+defmodule MyApp.RiftResolver do
+  @behaviour Rift.Resolver
+
+  @impl true
+  def resolve_actor(conn), do: conn.assigns.current_user
+
+  @impl true
+  def resolve_tenant(actor), do: actor.organization_id
+
+  @impl true
+  def resolve_access(_actor), do: :operator
+
+  @impl true
+  def resolve_case_types(_actor), do: [MyApp.CaseTypes.AccessChange]
+
+  @impl true
+  def resolve_select_options(_actor, MyApp.CaseTypes.AccessChange, :target_user_id) do
+    Enum.map(MyApp.Accounts.list_users(), &{&1.name, &1.id})
+  end
+end
+```
+
+Keep the Rift DSL formatted without parentheses by importing Rift in the host
+formatter config:
+
+```elixir
+[
+  import_deps: [:rift],
+  inputs: ["{config,lib,test}/**/*.{ex,exs}"]
+]
+```
 
 ## Development
 

@@ -8,6 +8,7 @@ defmodule Rift.CaseType do
   """
 
   alias Rift.CaseType.Field
+  alias Rift.CaseType.Info
 
   @field_types [:text, :textarea, :number, :boolean, :date, :select, :multi_select, :hidden]
   @field_options [:label, :required, :options, :default, :placeholder, :help_text, :constraints]
@@ -71,15 +72,32 @@ defmodule Rift.CaseType do
   @spec __using__(keyword()) :: Macro.t()
   defmacro __using__(_opts) do
     quote do
+      use Rift.CaseType.Dsl
+
       @behaviour Rift.CaseType
 
       import Rift.CaseType, only: [field: 2, field: 3]
 
       @impl true
-      def description, do: nil
+      def type, do: Info.type(__MODULE__)
 
       @impl true
-      def team, do: nil
+      def title, do: Info.title(__MODULE__)
+
+      @impl true
+      def description, do: Info.description(__MODULE__)
+
+      @impl true
+      def team, do: Info.team(__MODULE__)
+
+      @impl true
+      def fields, do: Info.fields(__MODULE__)
+
+      @impl true
+      def workflow, do: Info.workflow(__MODULE__)
+
+      @impl true
+      def trigger, do: Info.trigger(__MODULE__)
 
       @impl true
       def after_opened(_rift_case, _ctx), do: :ok
@@ -100,7 +118,12 @@ defmodule Rift.CaseType do
       def after_released(_rift_case, _ctx), do: :ok
 
       defoverridable description: 0,
+                     fields: 0,
                      team: 0,
+                     title: 0,
+                     trigger: 0,
+                     type: 0,
+                     workflow: 0,
                      after_opened: 2,
                      after_approved: 2,
                      after_rejected: 2,
