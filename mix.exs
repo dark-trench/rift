@@ -121,6 +121,7 @@ defmodule Rift.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       "example.smoke": [
+        "assets.build",
         "cmd --cd examples/standalone mix deps.get",
         "cmd --cd examples/standalone mix test"
       ],

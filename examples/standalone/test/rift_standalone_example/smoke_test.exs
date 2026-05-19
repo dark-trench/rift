@@ -2,6 +2,7 @@ defmodule RiftStandaloneExample.SmokeTest do
   use ExUnit.Case, async: true
 
   import Phoenix.ConnTest
+  import Phoenix.LiveViewTest
 
   alias RiftStandaloneExample.CaseTypes.AccessChange
   alias RiftStandaloneExample.Resolver
@@ -21,14 +22,61 @@ defmodule RiftStandaloneExample.SmokeTest do
 
     assert html_response(conn, 200) =~ "Rift"
     assert conn.resp_body =~ ~s(href="/assets/css/app.css")
+    assert conn.resp_body =~ ~s(class="rift-mailbox")
+    assert conn.resp_body =~ ~s(class="rift-theme-toggle")
+    assert conn.resp_body =~ ~s(phx-hook="ThemeToggle")
+    assert conn.resp_body =~ ~s(data-phx-theme="system")
+    assert conn.resp_body =~ "No open cases"
+    refute conn.resp_body =~ "Startable case types"
     assert conn.resp_body =~ "Example Operator"
-    assert conn.resp_body =~ "Access change"
+    assert conn.resp_body =~ "Catalog"
+    refute conn.resp_body =~ "Access change"
+  end
+
+  test "opens and selects case types from the embedded sidebar" do
+    {:ok, view, html} = live(build_conn(), "/rift")
+
+    assert html =~ "No open cases"
+    refute html =~ "Startable case types"
+    refute html =~ "Access change"
+
+    html =
+      view
+      |> element("button", "Catalog")
+      |> render_click()
+
+    assert html =~ ~s(class="rift-sidebar-list")
+    assert html =~ "Access change"
+    assert html =~ "No open cases"
+    refute html =~ "Request an operator review before changing access."
+
+    html =
+      view
+      |> element("button", "Access change")
+      |> render_click()
+
+    assert html =~ "Selected case type"
+    assert html =~ "Access change"
+    assert html =~ "Request an operator review before changing access."
+    assert html =~ "admin"
   end
 
   test "serves the standalone stylesheet" do
     conn = get(build_conn(), "/assets/css/app.css")
 
     assert response(conn, 200) =~ ".rift-shell"
+    assert conn.resp_body =~ ".rift-mailbox"
+    assert conn.resp_body =~ ~s([data-theme="dark"])
+    assert conn.resp_body =~ ".rift-theme-button"
+  end
+
+  test "serves Rift javascript for LiveView and theme interactions" do
+    conn = get(build_conn(), "/assets/js/app.js")
+
+    assert response(conn, 200) =~ "rift:theme"
+    assert conn.resp_body =~ "ThemeToggle"
+    assert conn.resp_body =~ "phx:set-theme"
+    refute conn.resp_body =~ "Placeholder bundle"
   end
 
   test "configures Rift to use the host repository" do
