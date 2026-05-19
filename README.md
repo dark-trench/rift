@@ -39,6 +39,13 @@ Configure the host repo:
 config :rift, repo: MyApp.Repo
 ```
 
+Generate the host migration for Rift's case and event tables:
+
+```sh
+mix rift.install
+mix ecto.migrate
+```
+
 Define host case types with `use Rift.CaseType` and expose host-owned context
 through a `Rift.Resolver` implementation.
 
