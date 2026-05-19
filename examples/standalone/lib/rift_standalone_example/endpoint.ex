@@ -6,6 +6,13 @@ defmodule RiftStandaloneExample.Endpoint do
   socket("/live", Phoenix.LiveView.Socket)
 
   plug(Plug.Static,
+    at: "/assets/js",
+    from: {:rift, "priv/static/assets/js"},
+    gzip: false,
+    only: ~w(app.js)
+  )
+
+  plug(Plug.Static,
     at: "/",
     from: :rift_standalone_example,
     gzip: false,

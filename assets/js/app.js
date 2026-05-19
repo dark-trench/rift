@@ -26,10 +26,58 @@ import {hooks as colocatedHooks} from "phoenix-colocated/rift"
 import topbar from "../vendor/topbar"
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+const themeStorageKey = "rift:theme"
+const themeChoices = new Set(["system", "light", "dark"])
+
+function normalizeTheme(theme) {
+  return themeChoices.has(theme) ? theme : "system"
+}
+
+function savedTheme() {
+  return normalizeTheme(localStorage.getItem(themeStorageKey) || "system")
+}
+
+function syncThemeControls(theme) {
+  const nextTheme = normalizeTheme(theme)
+
+  document.querySelectorAll(".theme-toggle-btn").forEach(button => {
+    if (button.getAttribute("data-phx-theme") === nextTheme) {
+      button.setAttribute("data-theme-active", nextTheme)
+    } else {
+      button.removeAttribute("data-theme-active")
+    }
+  })
+}
+
+function setTheme(theme) {
+  const nextTheme = normalizeTheme(theme)
+
+  if (nextTheme === "system") {
+    localStorage.removeItem(themeStorageKey)
+    document.documentElement.removeAttribute("data-theme")
+  } else {
+    localStorage.setItem(themeStorageKey, nextTheme)
+    document.documentElement.setAttribute("data-theme", nextTheme)
+  }
+
+  syncThemeControls(nextTheme)
+}
+
+const ThemeToggle = {
+  mounted() {
+    syncThemeControls(savedTheme())
+  },
+  updated() {
+    syncThemeControls(savedTheme())
+  },
+}
+
+setTheme(savedTheme())
+
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks},
+  hooks: {...colocatedHooks, ThemeToggle},
 })
 
 // Show progress bar on live navigation and form submits
@@ -45,6 +93,22 @@ liveSocket.connect()
 // >> liveSocket.enableLatencySim(1000)  // enabled for duration of browser session
 // >> liveSocket.disableLatencySim()
 window.liveSocket = liveSocket
+
+window.addEventListener("phx:set-theme", event => {
+  setTheme(event.target.getAttribute("data-phx-theme"))
+})
+
+window.addEventListener("storage", event => {
+  if (event.key === themeStorageKey) {
+    setTheme(event.newValue || "system")
+  }
+})
+
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  if (savedTheme() === "system") {
+    setTheme("system")
+  }
+})
 
 // The lines below enable quality of life phoenix_live_reload
 // development features:
