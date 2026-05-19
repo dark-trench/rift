@@ -102,8 +102,19 @@ defmodule MyAppWeb.Router do
 
     rift "/rift", otp_app: :my_app, resolver: MyApp.RiftResolver
   end
+
+  scope "/" do
+    pipe_through [:browser, :require_authenticated_user]
+
+    rift_originator "/cases", otp_app: :my_app, resolver: MyApp.RiftResolver
+  end
 end
 ```
+
+`rift/2` mounts the operator inbox. `rift_originator/2` mounts case submission
+routes at `/new` and `/new/:type` under the path you choose, so the host can put
+originator intake behind a different auth pipeline, a public signed-token plug,
+or any other boundary it owns.
 
 Resolve host-owned actors, tenancy, access, case types, and select options:
 

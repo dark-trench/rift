@@ -1,12 +1,12 @@
 defmodule RiftWeb.InboxLive do
   @moduledoc false
 
-  use Phoenix.LiveView
+  use RiftWeb, :live_view
 
-  alias Phoenix.LiveView.JS
   alias Rift.CaseCatalog
-  alias Rift.CaseForm
   alias Rift.Resolver
+
+  embed_templates "inbox_live/*"
 
   @impl Phoenix.LiveView
   def mount(_params, session, socket) do
@@ -27,7 +27,6 @@ defmodule RiftWeb.InboxLive do
         case_type_entries: case_type_entries,
         prefix: Map.fetch!(session, "prefix"),
         resolver: resolver,
-        selected_case_form: nil,
         selected_case_entry: nil,
         tenant_key: Map.get(session, "tenant_key")
       )
@@ -36,223 +35,7 @@ defmodule RiftWeb.InboxLive do
   end
 
   @impl Phoenix.LiveView
-  def render(assigns) do
-    ~H"""
-    <main class="rift-shell">
-      <section class="rift-mailbox" aria-label="Rift operator inbox">
-        <aside class="rift-sidebar">
-          <div class="rift-brand">
-            <span class="rift-brand-mark">R</span>
-            <div>
-              <p>Rift</p>
-              <h1>Operator inbox</h1>
-            </div>
-          </div>
-
-          <div
-            id="rift-theme-toggle"
-            class="rift-theme-toggle"
-            aria-label="Theme"
-            phx-hook="ThemeToggle"
-          >
-            <button
-              type="button"
-              class="rift-theme-button theme-toggle-btn"
-              phx-click={JS.dispatch("phx:set-theme")}
-              data-phx-theme="system"
-              title="System theme"
-            >
-              System
-            </button>
-            <button
-              type="button"
-              class="rift-theme-button theme-toggle-btn"
-              phx-click={JS.dispatch("phx:set-theme")}
-              data-phx-theme="light"
-              title="Light theme"
-            >
-              Light
-            </button>
-            <button
-              type="button"
-              class="rift-theme-button theme-toggle-btn"
-              phx-click={JS.dispatch("phx:set-theme")}
-              data-phx-theme="dark"
-              title="Dark theme"
-            >
-              Dark
-            </button>
-          </div>
-
-          <div class="rift-nav" aria-label="Inbox views">
-            <button
-              type="button"
-              class={nav_item_class(@active_view, :inbox)}
-              phx-click="show_view"
-              phx-value-view="inbox"
-            >
-              <span>Inbox</span>
-              <strong>0</strong>
-            </button>
-            <button type="button" class="rift-nav-item" disabled>
-              <span>Assigned</span>
-              <strong>0</strong>
-            </button>
-            <button type="button" class="rift-nav-item" disabled>
-              <span>Resolved</span>
-              <strong>0</strong>
-            </button>
-            <button
-              type="button"
-              class={catalog_item_class(@catalog_open?)}
-              phx-click="toggle_catalog"
-            >
-              <span>Catalog</span>
-              <strong>{@case_type_count}</strong>
-            </button>
-
-            <ul :if={@catalog_open?} class="rift-sidebar-list">
-              <li :for={entry <- @case_type_entries}>
-                <button
-                  type="button"
-                  class={sidebar_case_class(@selected_case_entry, entry)}
-                  phx-click="select_case_type"
-                  phx-value-case-type={entry.key}
-                >
-                  <span class="rift-case-dot" aria-hidden="true"></span>
-                  <span>{entry.title}</span>
-                </button>
-              </li>
-            </ul>
-          </div>
-
-          <dl class="rift-context">
-            <div>
-              <dt>Actor</dt>
-              <dd>{@actor_label}</dd>
-            </div>
-            <div :if={@tenant_key}>
-              <dt>Tenant</dt>
-              <dd>{@tenant_key}</dd>
-            </div>
-            <div>
-              <dt>Access</dt>
-              <dd>{@access}</dd>
-            </div>
-          </dl>
-        </aside>
-
-        <section class="rift-inbox-panel">
-          <header class="rift-toolbar">
-            <div>
-              <p>{active_view_label(@active_view)}</p>
-              <h2>{active_view_title(@active_view, @selected_case_entry)}</h2>
-            </div>
-            <span class="rift-count-pill">{case_type_count_label(@case_type_count)}</span>
-          </header>
-
-          <section :if={@active_view == :inbox} class="rift-empty" aria-label="Empty inbox">
-            <div>
-              <h3>Inbox clear</h3>
-              <p>New workflow decisions will land here for review.</p>
-            </div>
-          </section>
-
-          <section
-            :if={@active_view == :catalog}
-            class="rift-case-types"
-            aria-labelledby="rift-case-types-title"
-          >
-            <div :if={is_nil(@selected_case_entry)} class="rift-section-heading">
-              <p>Catalog</p>
-              <h3 id="rift-case-types-title">Select a case type</h3>
-              <span>Choose a case type from the sidebar to preview its operator workflow.</span>
-            </div>
-
-            <div :if={@selected_case_entry} class="rift-case-detail">
-              <div class="rift-section-heading">
-                <p>Selected case type</p>
-                <h3 id="rift-case-types-title">{@selected_case_entry.title}</h3>
-                <span>{@selected_case_entry.description}</span>
-              </div>
-
-              <dl>
-                <div>
-                  <dt>Workflow</dt>
-                  <dd>{@selected_case_entry.title}</dd>
-                </div>
-                <div :if={@selected_case_entry.team}>
-                  <dt>Team</dt>
-                  <dd>
-                    <span class="rift-case-chip">
-                      {@selected_case_entry.team}
-                    </span>
-                  </dd>
-                </div>
-              </dl>
-
-              <form
-                :if={@selected_case_form}
-                class="rift-originator-form"
-                phx-change="validate_case_form"
-                phx-submit="submit_case_form"
-              >
-                <div class="rift-form-fields">
-                  <label :for={field <- @selected_case_form.fields} class="rift-form-field">
-                    <span>
-                      {field.label}
-                      <em :if={field.required?}>Required</em>
-                    </span>
-
-                    <select
-                      :if={field.type in [:select, :multi_select]}
-                      name={"case_form[#{field.input_name}]"}
-                    >
-                      <option value="">Select</option>
-                      <option
-                        :for={{label, value} <- field.options}
-                        value={value}
-                        selected={field_value(@selected_case_form, field) == value}
-                      >
-                        {label}
-                      </option>
-                    </select>
-
-                    <textarea
-                      :if={field.type == :textarea}
-                      name={"case_form[#{field.input_name}]"}
-                      placeholder={field.placeholder}
-                    >{field_value(@selected_case_form, field)}</textarea>
-
-                    <input
-                      :if={field.type not in [:select, :multi_select, :textarea]}
-                      type={input_type(field.type)}
-                      name={"case_form[#{field.input_name}]"}
-                      placeholder={field.placeholder}
-                      value={field_value(@selected_case_form, field)}
-                    />
-
-                    <small :if={field.help_text}>{field.help_text}</small>
-                    <strong :if={Map.get(@selected_case_form.errors, field.name)}>
-                      {Map.fetch!(@selected_case_form.errors, field.name)}
-                    </strong>
-                  </label>
-                </div>
-
-                <div :if={@selected_case_form.submitted?} class="rift-form-status">
-                  <strong>Request ready</strong>
-                  <span>{@selected_case_entry.title}</span>
-                </div>
-
-                <button type="submit" class="rift-primary-action">Prepare request</button>
-              </form>
-            </div>
-          </section>
-        </section>
-      </section>
-    </main>
-    """
-  end
+  def render(assigns), do: index(assigns)
 
   @impl Phoenix.LiveView
   def handle_event("show_view", %{"view" => view}, socket) do
@@ -260,7 +43,6 @@ defmodule RiftWeb.InboxLive do
       assign(socket,
         active_view: active_view(view),
         catalog_open?: false,
-        selected_case_form: nil,
         selected_case_entry: nil
       )
 
@@ -278,44 +60,10 @@ defmodule RiftWeb.InboxLive do
       assign(socket,
         active_view: :catalog,
         catalog_open?: true,
-        selected_case_form:
-          case_form(selected_case_entry, socket.assigns.resolver, socket.assigns.actor),
         selected_case_entry: selected_case_entry
       )
 
     {:noreply, socket}
-  end
-
-  def handle_event(
-        "validate_case_form",
-        %{"case_form" => _params},
-        %{assigns: %{selected_case_form: nil}} = socket
-      ) do
-    {:noreply, socket}
-  end
-
-  def handle_event("validate_case_form", %{"case_form" => params}, socket) do
-    {:noreply,
-     assign(socket,
-       selected_case_form: CaseForm.validate(socket.assigns.selected_case_form, params)
-     )}
-  end
-
-  def handle_event(
-        "submit_case_form",
-        %{"case_form" => _params},
-        %{assigns: %{selected_case_form: nil}} = socket
-      ) do
-    {:noreply, socket}
-  end
-
-  def handle_event("submit_case_form", %{"case_form" => params}, socket) do
-    ctx = %{actor: socket.assigns.actor}
-
-    case CaseForm.submit(socket.assigns.selected_case_form, params, ctx) do
-      {:ok, form} -> {:noreply, assign(socket, selected_case_form: form)}
-      {:error, form} -> {:noreply, assign(socket, selected_case_form: form)}
-    end
   end
 
   defp actor_ref(%{id: id}), do: id
@@ -345,15 +93,4 @@ defmodule RiftWeb.InboxLive do
 
   defp case_type_count_label(1), do: "1 type"
   defp case_type_count_label(count), do: "#{count} types"
-
-  defp case_form(nil, _resolver, _actor), do: nil
-  defp case_form(entry, resolver, actor), do: CaseForm.new(entry.case_type, resolver, actor)
-
-  defp field_value(form, field), do: Map.get(form.params, field.input_name, field.value)
-
-  defp input_type(:number), do: "number"
-  defp input_type(:boolean), do: "checkbox"
-  defp input_type(:date), do: "date"
-  defp input_type(:hidden), do: "hidden"
-  defp input_type(_type), do: "text"
 end

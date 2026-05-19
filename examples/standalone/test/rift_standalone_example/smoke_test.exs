@@ -32,11 +32,12 @@ defmodule RiftStandaloneExample.SmokeTest do
     refute conn.resp_body =~ "Startable case types"
     assert conn.resp_body =~ "Example Operator"
     assert conn.resp_body =~ "Catalog"
+    refute conn.resp_body =~ "Prepare request"
     refute conn.resp_body =~ "Access change"
     refute conn.resp_body =~ "Vendor onboarding"
   end
 
-  test "opens and selects case types from the embedded sidebar" do
+  test "opens and selects case types from the operator catalog" do
     {:ok, view, html} = live(build_conn(), "/rift")
 
     assert html =~ "No open cases"
@@ -64,6 +65,26 @@ defmodule RiftStandaloneExample.SmokeTest do
     assert html =~ "Access change"
     assert html =~ "Request an operator review before changing access."
     assert html =~ "admin"
+    refute html =~ "Prepare request"
+    refute html =~ "User"
+    refute html =~ "Role"
+    refute html =~ "Reason"
+  end
+
+  test "serves host-placed originator case submission routes" do
+    conn = get(build_conn(), "/cases/new")
+
+    assert html_response(conn, 200) =~ "New request"
+    assert conn.resp_body =~ "Access change"
+    assert conn.resp_body =~ "Vendor onboarding"
+    assert conn.resp_body =~ "Data export"
+    refute conn.resp_body =~ "No open cases"
+
+    {:ok, view, html} = live(build_conn(), "/cases/new/access_change")
+
+    assert html =~ "New request"
+    assert html =~ "Access change"
+    assert html =~ "Request an operator review before changing access."
     assert html =~ "Prepare request"
     assert html =~ "User"
     assert html =~ "Role"

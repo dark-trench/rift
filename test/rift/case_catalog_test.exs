@@ -30,6 +30,7 @@ defmodule Rift.CaseCatalogTest do
                case_type: AccessChange,
                description: "Request an operator review before changing access.",
                key: "Elixir.Rift.CaseCatalogTest.AccessChange",
+               slug: "access_change",
                team: "admin",
                title: "Access change"
              },
@@ -37,6 +38,7 @@ defmodule Rift.CaseCatalogTest do
                case_type: MinimalCaseType,
                description: "Ready for operator review.",
                key: "Elixir.Rift.CaseCatalogTest.MinimalCaseType",
+               slug: "Elixir.Rift.CaseCatalogTest.MinimalCaseType",
                team: nil,
                title: "Minimal case"
              }
@@ -50,5 +52,12 @@ defmodule Rift.CaseCatalogTest do
              Rift.CaseCatalog.select(entries, "Elixir.Rift.CaseCatalogTest.AccessChange")
 
     assert Rift.CaseCatalog.select(entries, "Elixir.UnknownCaseType") == nil
+  end
+
+  test "selects entries by route slug without creating atoms" do
+    entries = Rift.CaseCatalog.entries([AccessChange])
+
+    assert %{case_type: AccessChange} = Rift.CaseCatalog.select_slug(entries, "access_change")
+    assert Rift.CaseCatalog.select_slug(entries, "unknown_case") == nil
   end
 end
