@@ -1,15 +1,23 @@
 defmodule RiftStandaloneExample.SmokeTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   import Phoenix.ConnTest
   import Phoenix.LiveViewTest
 
+  alias Rift.Cases.Case
+  alias Rift.Cases.Event
   alias RiftStandaloneExample.CaseTypes.AccessChange
   alias RiftStandaloneExample.CaseTypes.DataExport
   alias RiftStandaloneExample.CaseTypes.VendorOnboarding
+  alias RiftStandaloneExample.Repo
   alias RiftStandaloneExample.Resolver
 
   @endpoint RiftStandaloneExample.Endpoint
+
+  setup do
+    pid = Ecto.Adapters.SQL.Sandbox.start_owner!(Repo, shared: true)
+    on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+  end
 
   test "serves a host endpoint that uses Rift contracts" do
     conn = get(build_conn(), "/")
@@ -32,7 +40,7 @@ defmodule RiftStandaloneExample.SmokeTest do
     refute conn.resp_body =~ "Startable case types"
     assert conn.resp_body =~ "Example Operator"
     assert conn.resp_body =~ "Catalog"
-    refute conn.resp_body =~ "Prepare request"
+    refute conn.resp_body =~ "Submit request"
     refute conn.resp_body =~ "Access change"
     refute conn.resp_body =~ "Vendor onboarding"
   end
@@ -65,7 +73,7 @@ defmodule RiftStandaloneExample.SmokeTest do
     assert html =~ "Access change"
     assert html =~ "Request an operator review before changing access."
     assert html =~ "admin"
-    refute html =~ "Prepare request"
+    refute html =~ "Submit request"
     refute html =~ "User"
     refute html =~ "Role"
     refute html =~ "Reason"
@@ -85,7 +93,7 @@ defmodule RiftStandaloneExample.SmokeTest do
     assert html =~ "New request"
     assert html =~ "Access change"
     assert html =~ "Request an operator review before changing access."
-    assert html =~ "Prepare request"
+    assert html =~ "Submit request"
     assert html =~ "User"
     assert html =~ "Role"
     assert html =~ "Reason"
@@ -108,8 +116,13 @@ defmodule RiftStandaloneExample.SmokeTest do
       )
       |> render_submit()
 
-    assert html =~ "Request ready"
+    assert html =~ "Request submitted"
+    refute html =~ "Request ready"
     assert html =~ "Access change"
+    refute html =~ "Coverage"
+
+    assert Repo.aggregate(Case, :count) == 1
+    assert Repo.aggregate(Event, :count) == 1
   end
 
   test "serves the standalone stylesheet" do

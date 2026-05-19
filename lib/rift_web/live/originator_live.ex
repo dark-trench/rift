@@ -5,6 +5,7 @@ defmodule RiftWeb.OriginatorLive do
 
   alias Rift.CaseCatalog
   alias Rift.CaseForm
+  alias Rift.Cases
   alias Rift.Resolver
 
   embed_templates "originator_live/*"
@@ -75,11 +76,28 @@ defmodule RiftWeb.OriginatorLive do
   end
 
   def handle_event("submit_case_form", %{"case_form" => params}, socket) do
-    ctx = %{actor: socket.assigns.actor}
+    ctx = %{actor: socket.assigns.actor, tenant_key: socket.assigns.tenant_key}
 
-    case CaseForm.submit(socket.assigns.selected_case_form, params, ctx) do
-      {:ok, form} -> {:noreply, assign(socket, selected_case_form: form)}
-      {:error, form} -> {:noreply, assign(socket, selected_case_form: form)}
+    case Cases.open_case(
+           socket.assigns.selected_case_entry.case_type,
+           params,
+           ctx,
+           socket.assigns.resolver
+         ) do
+      {:ok, _rift_case} ->
+        form = %{
+          case_form(
+            socket.assigns.selected_case_entry,
+            socket.assigns.resolver,
+            socket.assigns.actor
+          )
+          | submitted?: true
+        }
+
+        {:noreply, assign(socket, selected_case_form: form)}
+
+      {:error, form} ->
+        {:noreply, assign(socket, selected_case_form: form)}
     end
   end
 
