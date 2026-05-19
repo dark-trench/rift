@@ -10,7 +10,7 @@ defmodule Rift.Router do
   """
   defmacro __using__(_opts) do
     quote do
-      import Rift.Router, only: [rift: 2]
+      import Rift.Router, only: [rift: 2, rift_originator: 2]
     end
   end
 
@@ -24,23 +24,54 @@ defmodule Rift.Router do
     * `:as` - route helper/live session name, defaults to `:rift`.
   """
   defmacro rift(path, opts) do
+    mount_live_routes(
+      path,
+      opts,
+      :rift,
+      quote(do: live("/", RiftWeb.InboxLive, :index, route_opts)),
+      __CALLER__
+    )
+  end
+
+  @doc """
+  Mounts originator case submission routes under the given path.
+
+  Host apps can place this macro in a different router scope or pipeline from
+  the operator inbox, for example public request intake versus authenticated
+  operator review.
+  """
+  defmacro rift_originator(path, opts) do
+    mount_live_routes(
+      path,
+      opts,
+      :rift_originator,
+      quote do
+        live("/new", RiftWeb.OriginatorLive, :new, route_opts)
+        live("/new/:type", RiftWeb.OriginatorLive, :new_type, route_opts)
+      end,
+      __CALLER__
+    )
+  end
+
+  defp mount_live_routes(path, opts, default_as, routes, caller) do
     opts =
       if Macro.quoted_literal?(opts) do
-        Macro.prewalk(opts, &expand_alias(&1, __CALLER__))
+        Macro.prewalk(opts, &expand_alias(&1, caller))
       else
         opts
       end
 
-    quote bind_quoted: [path: path, opts: opts] do
+    quote bind_quoted: [path: path, opts: opts, default_as: default_as], unquote: true do
       prefix = Phoenix.Router.scoped_path(__MODULE__, path)
 
       scope path, alias: false, as: false do
         import Phoenix.LiveView.Router, only: [live: 4, live_session: 3]
 
-        {session_name, session_opts, route_opts} = Rift.Router.__options__(prefix, opts)
+        {session_name, session_opts, route_opts} =
+          Rift.Router.__options__(prefix, opts, default_as)
 
         live_session session_name, session_opts do
-          live("/", RiftWeb.InboxLive, :index, route_opts)
+          unquote(routes)
         end
       end
     end
@@ -49,13 +80,20 @@ defmodule Rift.Router do
   @doc false
   @spec __options__(String.t(), keyword()) :: {atom(), keyword(), keyword()}
   def __options__(prefix, opts) when is_binary(prefix) and is_list(opts) do
+    __options__(prefix, opts, :rift)
+  end
+
+  @doc false
+  @spec __options__(String.t(), keyword(), atom()) :: {atom(), keyword(), keyword()}
+  def __options__(prefix, opts, default_as)
+      when is_binary(prefix) and is_list(opts) and is_atom(default_as) do
     validate_required!(opts, :otp_app)
     validate_required!(opts, :resolver)
     Enum.each(opts, &validate_opt!/1)
 
     otp_app = Keyword.fetch!(opts, :otp_app)
     resolver = Keyword.fetch!(opts, :resolver)
-    session_name = Keyword.get(opts, :as, :rift)
+    session_name = Keyword.get(opts, :as, default_as)
 
     session_opts = [
       session: {__MODULE__, :__session__, [prefix, otp_app, resolver]},

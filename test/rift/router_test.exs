@@ -48,13 +48,26 @@ defmodule Rift.RouterTest do
 
     scope "/" do
       rift("/rift", otp_app: :rift, resolver: TestResolver)
+      rift_originator("/cases", otp_app: :rift, resolver: TestResolver)
     end
   end
 
-  test "rift macro mounts the Rift landing route" do
+  test "rift macro mounts the operator landing route" do
     assert Enum.any?(TestRouter.__routes__(), fn route ->
              route.path == "/rift" &&
                elem(get_in(route.metadata, [:phoenix_live_view]), 0) == RiftWeb.InboxLive
+           end)
+  end
+
+  test "rift_originator macro mounts host-placed case submission routes" do
+    assert Enum.any?(TestRouter.__routes__(), fn route ->
+             route.path == "/cases/new" &&
+               elem(get_in(route.metadata, [:phoenix_live_view]), 0) == RiftWeb.OriginatorLive
+           end)
+
+    assert Enum.any?(TestRouter.__routes__(), fn route ->
+             route.path == "/cases/new/:type" &&
+               elem(get_in(route.metadata, [:phoenix_live_view]), 0) == RiftWeb.OriginatorLive
            end)
   end
 
