@@ -52,7 +52,7 @@
           phx-value-view="inbox"
         >
           <span>Inbox</span>
-          <strong>0</strong>
+          <strong>{@inbox_count}</strong>
         </button>
         <button type="button" class="rift-nav-item" disabled>
           <span>Assigned</span>
@@ -106,15 +106,44 @@
       <header class="rift-toolbar">
         <div>
           <p>{active_view_label(@active_view)}</p>
-          <h2>{active_view_title(@active_view, @selected_case_entry)}</h2>
+          <h2>{active_view_title(@active_view, @selected_case_entry, @inbox_count)}</h2>
         </div>
-        <span class="rift-count-pill">{case_type_count_label(@case_type_count)}</span>
+        <span :if={@active_view == :inbox} class="rift-count-pill">
+          {inbox_count_label(@inbox_count)}
+        </span>
+        <span :if={@active_view == :catalog} class="rift-count-pill">
+          {case_type_count_label(@case_type_count)}
+        </span>
       </header>
 
-      <section :if={@active_view == :inbox} class="rift-empty" aria-label="Empty inbox">
+      <section
+        :if={@active_view == :inbox and @inbox_count == 0}
+        class="rift-empty"
+        aria-label="Empty inbox"
+      >
         <div>
           <h3>Inbox clear</h3>
           <p>New workflow decisions will land here for review.</p>
+        </div>
+      </section>
+
+      <section
+        :if={@active_view == :inbox and @inbox_count > 0}
+        class="rift-case-types"
+        aria-label="Open cases"
+      >
+        <div class="rift-case-detail">
+          <dl>
+            <div :for={rift_case <- @inbox_cases}>
+              <dt>
+                <span class="rift-case-chip">{rift_case.status}</span>
+              </dt>
+              <dd>
+                <strong>{rift_case.subject}</strong>
+                <span :if={rift_case.team} class="rift-case-chip">{rift_case.team}</span>
+              </dd>
+            </div>
+          </dl>
         </div>
       </section>
 

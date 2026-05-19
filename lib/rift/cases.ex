@@ -8,6 +8,31 @@ defmodule Rift.Cases do
   alias Rift.Cases.Event
   alias Rift.Repo
 
+  import Ecto.Query
+
+  @inbox_statuses ~w(open)
+
+  @doc """
+  Lists cases visible in the operator inbox.
+  """
+  @spec list_inbox_cases(%{
+          required(:case_types) => [module()],
+          optional(:tenant_key) => String.t() | nil
+        }) :: [
+          Case.t()
+        ]
+  def list_inbox_cases(%{case_types: case_types} = opts) when is_list(case_types) do
+    case_type_names = Enum.map(case_types, &case_type_name/1)
+    tenant_key = Map.get(opts, :tenant_key)
+
+    Case
+    |> where([rift_case], rift_case.status in ^@inbox_statuses)
+    |> where([rift_case], rift_case.type in ^case_type_names)
+    |> where_tenant(tenant_key)
+    |> order_by([rift_case], desc: rift_case.updated_at)
+    |> Repo.get().all()
+  end
+
   @doc """
   Opens a Rift case and appends its public `case_opened` event atomically.
   """
@@ -77,6 +102,12 @@ defmodule Rift.Cases do
     end
   end
 
+  defp where_tenant(query, nil), do: where(query, [rift_case], is_nil(rift_case.tenant_key))
+
+  defp where_tenant(query, tenant_key) do
+    where(query, [rift_case], rift_case.tenant_key == ^tenant_key)
+  end
+
   defp case_type_open_attrs(case_type, payload, ctx) do
     %{
       details: stringify_keys(payload),
@@ -121,4 +152,6 @@ defmodule Rift.Cases do
   defp string_key(key) when is_atom(key), do: Atom.to_string(key)
   defp string_key(key) when is_binary(key), do: key
   defp string_key(key), do: to_string(key)
+
+  defp case_type_name(case_type), do: Atom.to_string(case_type.type())
 end
