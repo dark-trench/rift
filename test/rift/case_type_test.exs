@@ -50,6 +50,46 @@ defmodule Rift.CaseTypeTest do
   defmodule AccessChangeWorkflow do
   end
 
+  defmodule SparkAccessChange do
+    use Rift.CaseType
+
+    case_type do
+      type :spark_access_change
+      title "Spark access change"
+      description "A Spark-backed case type."
+      team "admin"
+      workflow Rift.CaseTypeTest.AccessChangeWorkflow
+      trigger :submit
+
+      fields do
+        field :target_user_id, :select,
+          label: "User",
+          required: true,
+          options: {:resolver, :target_user_id}
+
+        field :reason, :textarea,
+          label: "Reason",
+          required: true
+      end
+    end
+
+    @impl true
+    def build_payload(attrs, ctx) do
+      %{
+        target_user_id: attrs.target_user_id,
+        reason: attrs.reason,
+        opened_by: ctx.actor.id
+      }
+    end
+  end
+
+  defmodule MissingDslAccessChange do
+    use Rift.CaseType
+
+    @impl true
+    def build_payload(attrs, _ctx), do: attrs
+  end
+
   test "case type modules define host-owned form and workflow contracts" do
     assert AccessChange.type() == :access_change
     assert AccessChange.title() == "Access change"
@@ -82,6 +122,37 @@ defmodule Rift.CaseTypeTest do
 
     assert role.options == [{"Operator", "operator"}, {"Admin", "admin"}]
     assert reason.type == :textarea
+  end
+
+  test "Spark DSL case types expose the public case type callbacks" do
+    assert SparkAccessChange.type() == :spark_access_change
+    assert SparkAccessChange.title() == "Spark access change"
+    assert SparkAccessChange.description() == "A Spark-backed case type."
+    assert SparkAccessChange.team() == "admin"
+    assert SparkAccessChange.workflow() == AccessChangeWorkflow
+    assert SparkAccessChange.trigger() == :submit
+
+    assert [
+             %Rift.CaseType.Field{
+               name: :target_user_id,
+               type: :select,
+               label: "User",
+               required: true,
+               options: {:resolver, :target_user_id}
+             },
+             %Rift.CaseType.Field{
+               name: :reason,
+               type: :textarea,
+               label: "Reason",
+               required: true
+             }
+           ] = SparkAccessChange.fields()
+  end
+
+  test "missing required DSL metadata fails explicitly" do
+    assert_raise ArgumentError,
+                 ~r/missing required Rift case type DSL option :type/,
+                 fn -> MissingDslAccessChange.type() end
   end
 
   test "rejects unsupported field types at declaration time" do

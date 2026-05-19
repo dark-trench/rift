@@ -11,6 +11,8 @@ defmodule Rift.CaseType.Field do
     :default,
     :placeholder,
     :help_text,
+    :__identifier__,
+    :__spark_metadata__,
     required: false,
     options: [],
     constraints: %{}
@@ -25,6 +27,8 @@ defmodule Rift.CaseType.Field do
           default: term(),
           placeholder: String.t() | nil,
           help_text: String.t() | nil,
-          constraints: map()
+          constraints: map(),
+          __identifier__: term(),
+          __spark_metadata__: term()
         }
 end
