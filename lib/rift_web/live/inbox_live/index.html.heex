@@ -133,17 +133,49 @@
         aria-label="Open cases"
       >
         <div class="rift-case-detail">
+          <form class="rift-case-search" phx-change="search_cases">
+            <label for="rift-case-search-input">Search cases</label>
+            <div>
+              <.icon name="hero-magnifying-glass" class="rift-search-icon" />
+              <input
+                id="rift-case-search-input"
+                type="search"
+                name="case_search"
+                value={@case_search}
+                placeholder="Subject, team, actor, type, or field value"
+                autocomplete="off"
+                phx-debounce="150"
+              />
+            </div>
+          </form>
+
           <dl>
-            <div :for={rift_case <- @inbox_cases}>
+            <div :for={rift_case <- @filtered_inbox_cases} class="rift-inbox-case-row">
               <dt>
                 <span class="rift-case-chip">{rift_case.status}</span>
               </dt>
               <dd>
-                <strong>{rift_case.subject}</strong>
+                <.link class="rift-case-link" navigate={case_path(@prefix, rift_case)}>
+                  <strong>{rift_case.subject}</strong>
+                </.link>
                 <span :if={rift_case.team} class="rift-case-chip">{rift_case.team}</span>
               </dd>
+              <time class="rift-case-time" datetime={DateTime.to_iso8601(rift_case.inserted_at)}>
+                {case_time(rift_case.inserted_at)}
+              </time>
             </div>
           </dl>
+
+          <section
+            :if={Enum.empty?(@filtered_inbox_cases)}
+            class="rift-empty rift-empty-inline"
+            aria-label="No matching cases"
+          >
+            <div>
+              <h3>No matching cases</h3>
+              <p>Try a different subject, team, actor, or field value.</p>
+            </div>
+          </section>
         </div>
       </section>
 

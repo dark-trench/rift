@@ -206,4 +206,64 @@ defmodule Rift.CasesTest do
              ]
     end
   end
+
+  describe "fetch_inbox_case/2" do
+    test "fetches an open case for the tenant and available case type" do
+      assert {:ok, rift_case} =
+               Cases.open_case(%{
+                 tenant_key: "tenant-1",
+                 type: "access_change",
+                 subject: "Access change",
+                 team: "identity",
+                 opened_by_ref: "originator-1",
+                 details: %{"reason" => "Coverage"}
+               })
+
+      assert {:ok, %Case{} = fetched_case} =
+               Cases.fetch_inbox_case(rift_case.id, %{
+                 tenant_key: "tenant-1",
+                 case_types: [AccessChange]
+               })
+
+      assert fetched_case.id == rift_case.id
+      assert fetched_case.details == %{"reason" => "Coverage"}
+    end
+
+    test "does not fetch cases from another tenant" do
+      assert {:ok, rift_case} =
+               Cases.open_case(%{
+                 tenant_key: "tenant-2",
+                 type: "access_change",
+                 subject: "Access change",
+                 opened_by_ref: "originator-1"
+               })
+
+      assert Cases.fetch_inbox_case(rift_case.id, %{
+               tenant_key: "tenant-1",
+               case_types: [AccessChange]
+             }) == {:error, :not_found}
+    end
+
+    test "does not fetch unavailable case types" do
+      assert {:ok, rift_case} =
+               Cases.open_case(%{
+                 tenant_key: "tenant-1",
+                 type: "vendor_onboarding",
+                 subject: "Vendor onboarding",
+                 opened_by_ref: "originator-1"
+               })
+
+      assert Cases.fetch_inbox_case(rift_case.id, %{
+               tenant_key: "tenant-1",
+               case_types: [AccessChange]
+             }) == {:error, :not_found}
+    end
+
+    test "does not raise on malformed case ids" do
+      assert Cases.fetch_inbox_case("not-a-case-id", %{
+               tenant_key: "tenant-1",
+               case_types: [AccessChange]
+             }) == {:error, :not_found}
+    end
+  end
 end

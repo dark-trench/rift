@@ -59,6 +59,13 @@ defmodule Rift.RouterTest do
            end)
   end
 
+  test "rift macro mounts the operator case detail route" do
+    assert Enum.any?(TestRouter.__routes__(), fn route ->
+             route.path == "/rift/cases/:id" &&
+               elem(get_in(route.metadata, [:phoenix_live_view]), 0) == RiftWeb.CaseLive
+           end)
+  end
+
   test "rift_originator macro mounts host-placed case submission routes" do
     assert Enum.any?(TestRouter.__routes__(), fn route ->
              route.path == "/cases/new" &&
