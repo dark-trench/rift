@@ -16,21 +16,10 @@ config :rift_standalone_example, RiftStandaloneExample.Endpoint,
     layout: false
   ],
   pubsub_server: RiftStandaloneExample.PubSub,
-  live_view: [signing_salt: "rift standalone example"],
-  secret_key_base: String.duplicate("a", 64),
-  server: false
-
-config :rift_standalone_example, RiftStandaloneExample.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "rift_standalone_example_dev",
-  pool_size: 10
+  live_view: [signing_salt: "rift standalone example"]
 
 config :logger, level: :warning
 config :phoenix, :json_library, Jason
 config :swoosh, :api_client, false
 
-if File.exists?(Path.join(__DIR__, "#{config_env()}.exs")) do
-  import_config "#{config_env()}.exs"
-end
+import_config "#{config_env()}.exs"

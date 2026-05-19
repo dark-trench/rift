@@ -45,7 +45,7 @@ defmodule Rift.Resolver do
   """
   @spec call_with_fallback(module(), atom(), list()) :: term()
   def call_with_fallback(resolver, callback, args) when is_atom(callback) and is_list(args) do
-    if function_exported?(resolver, callback, length(args)) do
+    if Code.ensure_loaded?(resolver) and function_exported?(resolver, callback, length(args)) do
       apply(resolver, callback, args)
     else
       apply(__MODULE__, callback, args)
