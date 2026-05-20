@@ -26,6 +26,8 @@ defmodule RiftWeb.InboxLive do
         catalog_open?: false,
         case_type_count: length(case_type_entries),
         case_type_entries: case_type_entries,
+        case_search: "",
+        filtered_inbox_cases: [],
         inbox_cases: [],
         inbox_count: 0,
         prefix: Map.fetch!(session, "prefix"),
@@ -76,8 +78,64 @@ defmodule RiftWeb.InboxLive do
     {:noreply, socket}
   end
 
+  def handle_event("search_cases", %{"case_search" => search}, socket) do
+    search = String.trim(search)
+
+    socket =
+      assign(socket,
+        case_search: search,
+        filtered_inbox_cases: filter_inbox_cases(socket.assigns.inbox_cases, search)
+      )
+
+    {:noreply, socket}
+  end
+
   defp actor_ref(%{id: id}), do: id
   defp actor_ref(actor), do: actor
+
+  defp case_path(prefix, rift_case), do: "#{prefix}/cases/#{rift_case.id}"
+  defp case_time(%DateTime{} = datetime), do: Calendar.strftime(datetime, "%H:%M")
+
+  defp filter_inbox_cases(inbox_cases, ""), do: inbox_cases
+
+  defp filter_inbox_cases(inbox_cases, search) do
+    query = String.downcase(search)
+
+    Enum.filter(inbox_cases, fn rift_case ->
+      rift_case
+      |> case_search_text()
+      |> String.contains?(query)
+    end)
+  end
+
+  defp case_search_text(rift_case) do
+    search_fragments = [
+      rift_case.subject,
+      rift_case.status,
+      rift_case.team,
+      rift_case.opened_by_ref,
+      rift_case.type
+    ]
+
+    (search_fragments ++ detail_search_fragments(rift_case.details))
+    |> Enum.map_join(" ", &to_search_text/1)
+    |> String.downcase()
+  end
+
+  defp detail_search_fragments(details) when is_map(details) do
+    Enum.flat_map(details, fn {key, value} -> [key | detail_search_fragments(value)] end)
+  end
+
+  defp detail_search_fragments(values) when is_list(values) do
+    Enum.flat_map(values, &detail_search_fragments/1)
+  end
+
+  defp detail_search_fragments(nil), do: []
+  defp detail_search_fragments(value), do: [value]
+
+  defp to_search_text(nil), do: ""
+  defp to_search_text(value) when is_binary(value), do: value
+  defp to_search_text(value), do: to_string(value)
 
   defp assign_inbox_cases(socket) do
     inbox_cases =
@@ -86,7 +144,11 @@ defmodule RiftWeb.InboxLive do
         tenant_key: socket.assigns.tenant_key
       })
 
-    assign(socket, inbox_cases: inbox_cases, inbox_count: length(inbox_cases))
+    assign(socket,
+      filtered_inbox_cases: filter_inbox_cases(inbox_cases, socket.assigns.case_search),
+      inbox_cases: inbox_cases,
+      inbox_count: length(inbox_cases)
+    )
   end
 
   defp maybe_assign_inbox_cases(%{assigns: %{active_view: :inbox}} = socket),

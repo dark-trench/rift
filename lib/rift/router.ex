@@ -28,7 +28,10 @@ defmodule Rift.Router do
       path,
       opts,
       :rift,
-      quote(do: live("/", RiftWeb.InboxLive, :index, route_opts)),
+      quote do
+        live("/", RiftWeb.InboxLive, :index, route_opts)
+        live("/cases/:id", RiftWeb.CaseLive, :show, route_opts)
+      end,
       __CALLER__
     )
   end

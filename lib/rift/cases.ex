@@ -34,6 +34,38 @@ defmodule Rift.Cases do
   end
 
   @doc """
+  Fetches a single case visible in the operator inbox.
+  """
+  @spec fetch_inbox_case(Ecto.UUID.t(), %{
+          required(:case_types) => [module()],
+          optional(:tenant_key) => String.t() | nil
+        }) :: {:ok, Case.t()} | {:error, :not_found}
+  def fetch_inbox_case(id, %{case_types: case_types} = opts) when is_list(case_types) do
+    case Ecto.UUID.cast(id) do
+      {:ok, case_id} -> fetch_inbox_case_by_id(case_id, opts)
+      :error -> {:error, :not_found}
+    end
+  end
+
+  defp fetch_inbox_case_by_id(id, %{case_types: case_types} = opts) do
+    case_type_names = Enum.map(case_types, &case_type_name/1)
+    tenant_key = Map.get(opts, :tenant_key)
+
+    rift_case =
+      Case
+      |> where([rift_case], rift_case.id == ^id)
+      |> where([rift_case], rift_case.status in ^@inbox_statuses)
+      |> where([rift_case], rift_case.type in ^case_type_names)
+      |> where_tenant(tenant_key)
+      |> Repo.get().one()
+
+    case rift_case do
+      %Case{} = rift_case -> {:ok, rift_case}
+      nil -> {:error, :not_found}
+    end
+  end
+
+  @doc """
   Opens a Rift case and appends its public `case_opened` event atomically.
   """
   @spec open_case(map()) ::

@@ -6,6 +6,7 @@ defmodule RiftStandaloneExample.SmokeTest do
 
   alias Rift.Cases.Case
   alias Rift.Cases.Event
+  alias Rift.Cases
   alias RiftStandaloneExample.CaseTypes.AccessChange
   alias RiftStandaloneExample.CaseTypes.DataExport
   alias RiftStandaloneExample.CaseTypes.VendorOnboarding
@@ -79,6 +80,43 @@ defmodule RiftStandaloneExample.SmokeTest do
     refute html =~ "Reason"
   end
 
+  test "filters open cases from the operator inbox search" do
+    assert {:ok, _access_case} =
+             Cases.open_case(%{
+               tenant_key: "example",
+               type: "access_change",
+               subject: "Access change",
+               team: "admin",
+               opened_by_ref: "originator-1",
+               details: %{"reason" => "Coverage", "role" => "admin"}
+             })
+
+    assert {:ok, _vendor_case} =
+             Cases.open_case(%{
+               tenant_key: "example",
+               type: "vendor_onboarding",
+               subject: "Vendor onboarding",
+               team: "legal",
+               opened_by_ref: "originator-2",
+               details: %{"vendor_name" => "Northwind"}
+             })
+
+    {:ok, view, html} = live(build_conn(), "/rift")
+
+    assert html =~ ~s(name="case_search")
+    assert html =~ ~s(placeholder="Subject, team, actor, type, or field value")
+    assert html =~ "Access change"
+    assert html =~ "Vendor onboarding"
+
+    html =
+      view
+      |> form(".rift-case-search", case_search: "northwind")
+      |> render_change()
+
+    refute html =~ "Access change"
+    assert html =~ "Vendor onboarding"
+  end
+
   test "serves host-placed originator case submission routes" do
     conn = get(build_conn(), "/cases/new")
 
@@ -123,13 +161,45 @@ defmodule RiftStandaloneExample.SmokeTest do
 
     assert Repo.aggregate(Case, :count) == 1
     assert Repo.aggregate(Event, :count) == 1
+    rift_case = Repo.one!(Case)
 
     conn = get(build_conn(), "/rift")
 
     assert html_response(conn, 200) =~ "Access change"
     assert conn.resp_body =~ "open"
     assert conn.resp_body =~ "admin"
+    assert conn.resp_body =~ ~s(href="/rift/cases/)
+    assert conn.resp_body =~ ~s(class="rift-case-link")
+    assert conn.resp_body =~ ~s(class="rift-case-time")
+    assert conn.resp_body =~ Calendar.strftime(rift_case.inserted_at, "%H:%M")
     refute conn.resp_body =~ "Inbox clear"
+
+    conn = get(build_conn(), "/rift/cases/#{rift_case.id}")
+
+    assert html_response(conn, 200) =~ "Case detail"
+    assert conn.resp_body =~ ~s(href="/rift")
+    assert conn.resp_body =~ "Back to inbox"
+    assert conn.resp_body =~ "hero-arrow-left"
+    assert conn.resp_body =~ ~s(class="rift-message")
+    assert conn.resp_body =~ ~s(class="rift-message-field")
+    assert conn.resp_body =~ ~s(class="rift-message-footer")
+    assert conn.resp_body =~ "Rift case"
+    assert conn.resp_body =~ "Case summary from the operator inbox."
+    refute conn.resp_body =~ "Rift request"
+    assert conn.resp_body =~ ~s(class="rift-message-submitted")
+    assert conn.resp_body =~ "Submitted"
+    assert conn.resp_body =~ Calendar.strftime(rift_case.inserted_at, "%b %d, %Y")
+    refute conn.resp_body =~ "access_change submitted"
+    assert conn.resp_body =~ ~r/<strong>\s*1\s*<\/strong>/
+    refute conn.resp_body =~ "<strong>Open</strong>"
+    assert conn.resp_body =~ "Access change"
+    assert conn.resp_body =~ "open"
+    assert Regex.scan(~r/>open</, conn.resp_body) == [[">open<"]]
+    assert conn.resp_body =~ "admin"
+    assert conn.resp_body =~ "operator-1"
+    assert conn.resp_body =~ "Coverage"
+    refute conn.resp_body =~ "Timeline"
+    refute conn.resp_body =~ "case_opened"
   end
 
   test "serves the standalone stylesheet" do
@@ -137,6 +207,13 @@ defmodule RiftStandaloneExample.SmokeTest do
 
     assert response(conn, 200) =~ ".rift-shell"
     assert conn.resp_body =~ ".rift-mailbox"
+    assert conn.resp_body =~ ".rift-case-link"
+    assert conn.resp_body =~ ".rift-back-link"
+    assert conn.resp_body =~ ".rift-message"
+    assert conn.resp_body =~ ".rift-message-field"
+    assert conn.resp_body =~ ".rift-message-footer"
+    assert conn.resp_body =~ ".rift-case-link:hover {\n  color:"
+    refute conn.resp_body =~ ".rift-case-link:hover {\n  background:"
     assert conn.resp_body =~ ~s([data-theme="dark"])
     assert conn.resp_body =~ ".rift-theme-button"
   end
