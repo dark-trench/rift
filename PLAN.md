@@ -44,6 +44,39 @@ V1 explicitly avoids:
 - Replay or arbitrary unblock controls.
 - Standalone SaaS.
 
+## Current Implementation State
+
+Implemented:
+
+- Router macros for operator and originator surfaces:
+  - `rift/2` mounts the operator inbox and case detail page.
+  - `rift_originator/2` mounts originator submission and My Cases routes.
+- Host resolver session data for actor, tenancy, access, case types, and labels.
+- Spark-backed `use Rift.CaseType` DSL for host-defined case metadata, fields,
+  workflow module, and trigger.
+- Generated originator case forms from DSL field definitions.
+- Static and resolver-backed select options.
+- Case and event persistence through `rift_cases` and `rift_case_events`.
+- `mix rift.install` host migration generation for the current case/event schema.
+- Case opening that validates form input, builds the host payload, persists the
+  case, and appends a public `case_opened` event.
+- Operator inbox list, search, and case detail shell.
+- Originator My Cases list with status filtering.
+- Standalone example app and smoke tests for Rift as an embedded dependency.
+
+Still planned for V1:
+
+- Starting the configured Squid Mesh workflow during case opening and storing
+  `squid_mesh_run_id`.
+- Workflow start failure handling and retry-safe case state.
+- Claim, release, assign, approve, reject, and cancel actions.
+- Lifecycle hook execution after accepted runtime actions.
+- Runtime status reconciliation from Squid Mesh run inspection.
+- Comments, attachment references, event timelines, and internal notes.
+- Private read receipts and unread filters.
+- SquidSonar link or embed for runtime inspection.
+- Stronger explicit authorization scopes and adversarial permission tests.
+
 ## Core Model
 
 Each Rift case maps to exactly one Squid Mesh workflow run.
@@ -74,33 +107,42 @@ On submit, Rift:
 1. Validates generic field constraints.
 2. Creates a case.
 3. Appends `case_opened`.
-4. Calls the case type payload builder.
-5. Starts the configured Squid Mesh workflow and trigger.
-6. Stores `squid_mesh_run_id`.
-7. Appends `workflow_started`.
-8. Runs `after_opened`.
-9. Redirects to the case detail page.
+4. Calls the case type payload builder and stores the submitted payload in
+   `details`.
+
+The remaining V1 submit path should then:
+
+1. Start the configured Squid Mesh workflow and trigger.
+2. Store `squid_mesh_run_id`.
+3. Append `workflow_started`.
+4. Run `after_opened`.
+5. Redirect to the case detail page.
 
 ### My Cases
 
 `/cases/mine` shows cases opened by the current actor in the current tenant.
 
-The list shows subject, type, status, assignee, last event time, and eventually
-whether the case has unread activity for the current originator.
+The implemented list shows subject, type, status, assignee, submitted time, and
+last updated time, with a status filter. It should eventually show whether the
+case has unread activity for the current originator.
 
-The detail page shows public events, status, submitted data summary, comments,
-and visible attachment references.
+Originator case detail is still planned. It should show public events, status,
+submitted data summary, comments, and visible attachment references.
 
 ### Operator Inbox
 
-`/` is the operator landing page. It defaults to cases needing action:
+`/` is the operator landing page. The implemented inbox currently lists open
+cases visible to the operator's tenant and allowed case types, with text search
+over case metadata and submitted details.
+
+The V1 inbox should default to cases needing action:
 
 - `waiting_for_approval`
 - `failed`
 - `side_effect_failed`
 - case-type-specific actionable states
 
-Filters:
+Planned filters:
 
 - status
 - type
@@ -108,7 +150,8 @@ Filters:
 - assignee
 - updated time
 
-The case detail page shows the full event timeline, internal notes, ownership
+The implemented case detail page is an operator-facing submitted-data shell. The
+V1 detail page should show the full event timeline, internal notes, ownership
 controls, linked Squid Mesh run status, current waiting reason,
 approve/reject/cancel actions, side-effect failures, and a SquidSonar link or
 embed.
@@ -127,16 +170,20 @@ defmodule MyAppWeb.Router do
 
     rift "/rift", otp_app: :my_app, resolver: MyApp.RiftResolver
   end
+
+  scope "/" do
+    pipe_through [:browser, :require_authenticated_user]
+
+    rift_originator "/cases", otp_app: :my_app, resolver: MyApp.RiftResolver
+  end
 end
 ```
 
 Routes mounted by Rift:
 
-- `/`
-- `/cases/new`
-- `/cases/new/:type`
-- `/cases/mine`
-- `/cases/:id`
+- `rift "/rift"` mounts `/rift` and `/rift/cases/:id`.
+- `rift_originator "/cases"` mounts `/cases/new`, `/cases/new/:type`, and
+  `/cases/mine`.
 
 ### Resolver
 
@@ -189,48 +236,37 @@ end
 
 Case types are code-defined by the host app. They describe the human form,
 workflow mapping, payload mapping, allowed actions, and optional side effects.
+Metadata and fields are declared with the Rift case type DSL. Payload mapping
+and lifecycle side effects remain normal Elixir callbacks.
 
 ```elixir
 defmodule MyApp.RiftCases.AccessChange do
   use Rift.CaseType
 
-  @impl true
-  def type, do: :access_change
+  case_type do
+    type :access_change
+    title "Access change"
+    description "Ask an operator to review a role or permission change."
+    team "admin"
+    workflow MyApp.Workflows.AccessChange
+    trigger :submit
 
-  @impl true
-  def title, do: "Access change"
-
-  @impl true
-  def description, do: "Ask an operator to review a role or permission change."
-
-  @impl true
-  def team, do: "admin"
-
-  @impl true
-  def fields do
-    [
-      field(:target_user_id, :select,
+    fields do
+      field :target_user_id, :select,
         label: "User",
         required: true,
         options: {:resolver, :target_user_id}
-      ),
-      field(:role, :select,
+
+      field :role, :select,
         label: "Role",
         required: true,
         options: [{"Operator", "operator"}, {"Admin", "admin"}]
-      ),
-      field(:reason, :textarea,
+
+      field :reason, :textarea,
         label: "Reason",
         required: true
-      )
-    ]
+    end
   end
-
-  @impl true
-  def workflow, do: MyApp.Workflows.AccessChange
-
-  @impl true
-  def trigger, do: :submit
 
   @impl true
   def build_payload(attrs, ctx) do
@@ -267,7 +303,8 @@ end
 
 The important boundary:
 
-- `fields/0` describes the human form.
+- `case_type do ... end` declares the stable type, UI copy, queue/team,
+  workflow module, trigger, and human form fields.
 - `build_payload/2` maps submitted form data into the Squid Mesh payload.
 - Lifecycle hooks run host side effects after Rift accepts an action.
 - Rift never derives forms from Squid Mesh workflow modules.
@@ -287,8 +324,9 @@ Select options may be static or resolved by `Rift.Resolver`.
 
 ## Tables
 
-Rift should install tables with `mix rift.install`, following the same
-host-migration pattern used by Squid Mesh.
+Rift installs its current case and event tables with `mix rift.install`,
+following the same host-migration pattern used by Squid Mesh. Read receipts are
+planned as a follow-up schema.
 
 ### `rift_cases`
 
@@ -457,18 +495,24 @@ records the cancelled release decision.
 
 ## Test Plan
 
-Tests should cover:
+Implemented test coverage includes:
 
 - Router mount options, invalid options, session data, and resolver fallback.
 - `mix rift.install` creating one current-schema migration and skipping when
   already installed.
-- Case opening, generated form validation, event creation, Squid Mesh start
-  success, and Squid Mesh start failure.
+- Case opening, generated form validation, event creation, case detail scoping,
+  originator My Cases scoping, and status filtering.
+- Standalone example smoke coverage for type picker, generated submit form,
+  operator inbox, operator detail shell, My Cases, host resolver behavior, and
+  stylesheet assertions.
+
+Remaining V1 tests should cover:
+
+- Squid Mesh start success and Squid Mesh start failure.
 - Claim, release, assign, approve, reject, cancel, and status reconciliation.
 - Lifecycle hook success and failure.
-- LiveView type picker, generated submit form, My Cases, action inbox filters,
-  detail timeline visibility, ownership controls, side-effect failure display,
-  and action button access.
+- Action inbox filters, detail timeline visibility, ownership controls,
+  side-effect failure display, and action button access.
 - Read receipts for originator and operator audiences, including private unread
   filters that never disclose whether another actor or audience has read a case.
 - Minimal host app smoke path with one approval workflow, one rejection hook,
