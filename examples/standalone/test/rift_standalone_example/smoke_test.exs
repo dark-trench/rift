@@ -202,6 +202,75 @@ defmodule RiftStandaloneExample.SmokeTest do
     refute conn.resp_body =~ "case_opened"
   end
 
+  test "shows cases opened by the current originator" do
+    assert {:ok, rift_case} =
+             Cases.open_case(%{
+               tenant_key: "example",
+               type: "access_change",
+               subject: "Access change",
+               team: "admin",
+               opened_by_ref: "operator-1",
+               assignee_ref: "operator-2"
+             })
+
+    assert {:ok, approved_case} =
+             Cases.open_case(%{
+               tenant_key: "example",
+               type: "data_export",
+               subject: "Data export",
+               opened_by_ref: "operator-1"
+             })
+
+    approved_case =
+      approved_case
+      |> Case.changeset(%{status: "approved"})
+      |> Repo.update!()
+
+    assert {:ok, _other_actor_case} =
+             Cases.open_case(%{
+               tenant_key: "example",
+               type: "vendor_onboarding",
+               subject: "Vendor onboarding",
+               opened_by_ref: "originator-2"
+             })
+
+    conn = get(build_conn(), "/cases/mine")
+
+    assert html_response(conn, 200) =~ "My cases"
+    assert conn.resp_body =~ "Access change"
+    assert conn.resp_body =~ "Data export"
+    assert conn.resp_body =~ "open"
+    assert conn.resp_body =~ "approved"
+    assert conn.resp_body =~ "operator-2"
+    assert conn.resp_body =~ Calendar.strftime(rift_case.updated_at, "%b %d, %Y")
+    assert conn.resp_body =~ Calendar.strftime(approved_case.updated_at, "%b %d, %Y")
+    refute conn.resp_body =~ "Vendor onboarding"
+
+    {:ok, view, html} = live(build_conn(), "/cases/mine")
+
+    assert html =~ ~s(class="rift-filter-button")
+    assert html =~ "hero-funnel"
+    refute html =~ ~s(class="rift-filter-menu")
+    assert html =~ "Access change"
+    assert html =~ "Data export"
+
+    html =
+      view
+      |> element(".rift-filter-button")
+      |> render_click()
+
+    assert html =~ ~s(class="rift-filter-menu")
+    assert html =~ "Approved"
+
+    html =
+      view
+      |> element(~s(button[phx-value-status="approved"]))
+      |> render_click()
+
+    refute html =~ "Access change"
+    assert html =~ "Data export"
+  end
+
   test "serves the standalone stylesheet" do
     conn = get(build_conn(), "/assets/css/app.css")
 
@@ -212,6 +281,7 @@ defmodule RiftStandaloneExample.SmokeTest do
     assert conn.resp_body =~ ".rift-message"
     assert conn.resp_body =~ ".rift-message-field"
     assert conn.resp_body =~ ".rift-message-footer"
+    assert conn.resp_body =~ ".rift-list-filters"
     assert conn.resp_body =~ ".rift-case-link:hover {\n  color:"
     refute conn.resp_body =~ ".rift-case-link:hover {\n  background:"
     assert conn.resp_body =~ ~s([data-theme="dark"])

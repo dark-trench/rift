@@ -1,0 +1,157 @@
+<main class="rift-shell">
+  <section class="rift-mailbox" aria-label="Rift originator cases">
+    <aside class="rift-sidebar">
+      <div class="rift-brand">
+        <span class="rift-brand-mark">R</span>
+        <div>
+          <p>Rift</p>
+          <h1>My cases</h1>
+        </div>
+      </div>
+
+      <div
+        id="rift-theme-toggle"
+        class="rift-theme-toggle"
+        aria-label="Theme"
+        phx-hook="ThemeToggle"
+      >
+        <button
+          type="button"
+          class="rift-theme-button theme-toggle-btn"
+          phx-click={JS.dispatch("phx:set-theme")}
+          data-phx-theme="system"
+          title="System theme"
+        >
+          System
+        </button>
+        <button
+          type="button"
+          class="rift-theme-button theme-toggle-btn"
+          phx-click={JS.dispatch("phx:set-theme")}
+          data-phx-theme="light"
+          title="Light theme"
+        >
+          Light
+        </button>
+        <button
+          type="button"
+          class="rift-theme-button theme-toggle-btn"
+          phx-click={JS.dispatch("phx:set-theme")}
+          data-phx-theme="dark"
+          title="Dark theme"
+        >
+          Dark
+        </button>
+      </div>
+
+      <nav class="rift-nav" aria-label="Originator cases">
+        <.link class="rift-nav-item rift-nav-item-active" patch={my_cases_path(@prefix)}>
+          <span>My cases</span>
+          <strong>{length(@cases)}</strong>
+        </.link>
+        <.link class="rift-nav-item" navigate={new_case_path(@prefix)}>
+          <span>New request</span>
+          <strong>{@case_type_count}</strong>
+        </.link>
+      </nav>
+
+      <dl class="rift-context">
+        <div>
+          <dt>Actor</dt>
+          <dd>{@actor_label}</dd>
+        </div>
+        <div :if={@tenant_key}>
+          <dt>Tenant</dt>
+          <dd>{@tenant_key}</dd>
+        </div>
+      </dl>
+    </aside>
+
+    <section class="rift-inbox-panel">
+      <header class="rift-toolbar">
+        <div>
+          <p>Case history</p>
+          <h2>My cases</h2>
+        </div>
+        <span class="rift-count-pill">{case_count_label(length(@filtered_cases))}</span>
+      </header>
+
+      <div
+        :if={not Enum.empty?(@cases)}
+        class="rift-list-filters"
+      >
+        <div class="rift-filter-menu-shell">
+          <button
+            type="button"
+            class="rift-filter-button"
+            phx-click="toggle_status_filter"
+            aria-haspopup="menu"
+            aria-expanded={@status_filter_open?}
+          >
+            <.icon name="hero-funnel" class="rift-filter-icon" />
+            <span>{filter_button_label(@case_status)}</span>
+            <.icon name="hero-chevron-down" class="rift-filter-chevron" />
+          </button>
+
+          <div :if={@status_filter_open?} class="rift-filter-menu" role="menu">
+            <button
+              :for={{label, value} <- status_options(@cases)}
+              type="button"
+              class={filter_option_class(@case_status, value)}
+              phx-click="filter_cases"
+              phx-value-status={value}
+              role="menuitemradio"
+              aria-checked={@case_status == value}
+            >
+              {label}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <section :if={Enum.empty?(@cases)} class="rift-empty" aria-label="No submitted cases">
+        <div>
+          <h3>No cases yet</h3>
+          <p>Submitted workflow requests will appear here.</p>
+        </div>
+      </section>
+
+      <section
+        :if={not Enum.empty?(@cases) and Enum.empty?(@filtered_cases)}
+        class="rift-empty"
+        aria-label="No matching cases"
+      >
+        <div>
+          <h3>No matching cases</h3>
+          <p>Choose a different status filter.</p>
+        </div>
+      </section>
+
+      <section
+        :if={not Enum.empty?(@filtered_cases)}
+        class="rift-case-types"
+        aria-label="My cases"
+      >
+        <div class="rift-case-detail">
+          <dl>
+            <div :for={rift_case <- @filtered_cases} class="rift-inbox-case-row">
+              <dt>
+                <span class="rift-case-chip">{rift_case.status}</span>
+              </dt>
+              <dd>
+                <strong>{rift_case.subject}</strong>
+                <span class="rift-case-chip">
+                  {case_type_label(@case_type_entries, rift_case)}
+                </span>
+                <span class="rift-case-chip">{assignee_label(rift_case)}</span>
+              </dd>
+              <time class="rift-case-time" datetime={DateTime.to_iso8601(rift_case.updated_at)}>
+                {case_updated_at(rift_case.updated_at)}
+              </time>
+            </div>
+          </dl>
+        </div>
+      </section>
+    </section>
+  </section>
+</main>

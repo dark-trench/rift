@@ -49,6 +49,7 @@ defmodule Rift.Router do
       opts,
       :rift_originator,
       quote do
+        live("/mine", RiftWeb.MyCasesLive, :index, route_opts)
         live("/new", RiftWeb.OriginatorLive, :new, route_opts)
         live("/new/:type", RiftWeb.OriginatorLive, :new_type, route_opts)
       end,
