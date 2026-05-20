@@ -85,8 +85,8 @@ On submit, Rift:
 
 `/cases/mine` shows cases opened by the current actor in the current tenant.
 
-The list shows subject, type, status, assignee, last event time, and whether
-the case needs attention.
+The list shows subject, type, status, assignee, last event time, and eventually
+whether the case has unread activity for the current originator.
 
 The detail page shows public events, status, submitted data summary, comments,
 and visible attachment references.
@@ -337,6 +337,41 @@ Indexes:
 - `type`
 - `inserted_at`
 
+### `rift_case_reads`
+
+Read state is private per actor and audience. Rift should not infer unread state
+from case status, and it should not expose one audience's read state to another
+audience. Originators can filter by whether they personally have unread visible
+activity. Operators can filter by whether they personally have unread operator
+activity.
+
+A case is unread for the current actor when there is a newer event visible to
+that actor's audience than their latest read receipt.
+
+Fields:
+
+- `id :binary_id`
+- `case_id :binary_id`
+- `tenant_key :string`
+- `actor_ref :string`
+- `audience :string` (`originator` or `operator`)
+- `last_read_at :utc_datetime_usec`
+- `last_read_event_id :binary_id`
+- timestamps
+
+Indexes:
+
+- `case_id`
+- `tenant_key`
+- `actor_ref`
+- `audience`
+- unique `case_id, actor_ref, audience`
+
+Originator unread calculations only consider events with
+`visible_to_originator = true`. Operator unread calculations consider internal
+case events visible to operators. Opening a case detail page should upsert the
+current actor's own read receipt after the visible events have been loaded.
+
 ## Event Types
 
 V1 event types:
@@ -434,6 +469,8 @@ Tests should cover:
 - LiveView type picker, generated submit form, My Cases, action inbox filters,
   detail timeline visibility, ownership controls, side-effect failure display,
   and action button access.
+- Read receipts for originator and operator audiences, including private unread
+  filters that never disclose whether another actor or audience has read a case.
 - Minimal host app smoke path with one approval workflow, one rejection hook,
   one cancellation hook, SquidSonar mounted, and the full open -> claim -> wait
   -> approve/reject/cancel -> inspect flow.
