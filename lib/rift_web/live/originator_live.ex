@@ -24,6 +24,7 @@ defmodule RiftWeb.OriginatorLive do
           Resolver.call_with_fallback(resolver, :resolve_actor_label, [actor_ref(actor)]),
         case_type_count: length(case_type_entries),
         case_type_entries: case_type_entries,
+        originator_case_count: 0,
         prefix: Map.fetch!(session, "prefix"),
         resolver: resolver,
         selected_case_entry: nil,
@@ -39,11 +40,13 @@ defmodule RiftWeb.OriginatorLive do
     selected_case_entry = select_case_type(socket.assigns.case_type_entries, params)
 
     socket =
-      assign(socket,
+      socket
+      |> assign(
         selected_case_entry: selected_case_entry,
         selected_case_form:
           case_form(selected_case_entry, socket.assigns.resolver, socket.assigns.actor)
       )
+      |> assign_originator_case_count()
 
     {:noreply, socket}
   end
@@ -94,7 +97,10 @@ defmodule RiftWeb.OriginatorLive do
           | submitted?: true
         }
 
-        {:noreply, assign(socket, selected_case_form: form)}
+        {:noreply,
+         socket
+         |> assign(selected_case_form: form)
+         |> assign_originator_case_count()}
 
       {:error, form} ->
         {:noreply, assign(socket, selected_case_form: form)}
@@ -104,11 +110,29 @@ defmodule RiftWeb.OriginatorLive do
   defp select_case_type(entries, %{"type" => type}), do: CaseCatalog.select_slug(entries, type)
   defp select_case_type(_entries, _params), do: nil
 
-  defp actor_ref(%{id: id}), do: id
-  defp actor_ref(actor), do: actor
+  defp actor_ref(%{id: id}), do: to_string(id)
+  defp actor_ref(actor), do: to_string(actor)
 
   defp new_case_path(prefix), do: "#{prefix}/new"
   defp new_case_path(prefix, entry), do: "#{prefix}/new/#{entry.slug}"
+  defp my_cases_path(prefix), do: "#{prefix}/mine"
+
+  defp assign_originator_case_count(socket) do
+    count =
+      socket
+      |> originator_cases_scope()
+      |> Cases.list_originator_cases()
+      |> length()
+
+    assign(socket, originator_case_count: count)
+  end
+
+  defp originator_cases_scope(socket) do
+    %{
+      opened_by_ref: actor_ref(socket.assigns.actor),
+      tenant_key: socket.assigns.tenant_key
+    }
+  end
 
   defp new_request_class(nil), do: "rift-nav-item rift-nav-item-active"
   defp new_request_class(_entry), do: "rift-nav-item"

@@ -68,6 +68,11 @@ defmodule Rift.RouterTest do
 
   test "rift_originator macro mounts host-placed case submission routes" do
     assert Enum.any?(TestRouter.__routes__(), fn route ->
+             route.path == "/cases/mine" &&
+               elem(get_in(route.metadata, [:phoenix_live_view]), 0) == RiftWeb.MyCasesLive
+           end)
+
+    assert Enum.any?(TestRouter.__routes__(), fn route ->
              route.path == "/cases/new" &&
                elem(get_in(route.metadata, [:phoenix_live_view]), 0) == RiftWeb.OriginatorLive
            end)

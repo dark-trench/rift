@@ -94,6 +94,85 @@
   height: 16px;
 }
 
+.rift-list-filters {
+  border-bottom: 1px solid var(--rift-border);
+  padding: 12px 28px;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--rift-surface);
+}
+
+.rift-filter-menu-shell {
+  position: relative;
+}
+
+.rift-filter-button {
+  border: 1px solid var(--rift-border-strong);
+  min-height: 34px;
+  border-radius: 999px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--rift-chip);
+  color: var(--rift-heading);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rift-filter-button:hover,
+.rift-filter-button[aria-expanded="true"] {
+  background: var(--rift-hover);
+}
+
+.rift-filter-icon {
+  width: 15px;
+  height: 15px;
+  color: var(--rift-muted);
+}
+
+.rift-filter-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--rift-soft);
+}
+
+.rift-filter-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 170px;
+  border: 1px solid var(--rift-border-strong);
+  border-radius: 8px;
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  background: var(--rift-surface);
+  box-shadow: 0 18px 42px var(--rift-shadow);
+}
+
+.rift-filter-option {
+  border: 0;
+  min-height: 32px;
+  border-radius: 6px;
+  padding: 0 9px;
+  background: transparent;
+  color: var(--rift-heading);
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rift-filter-option:hover,
+.rift-filter-option-active {
+  background: var(--rift-hover);
+  color: var(--rift-heading);
+}
+
 .rift-case-detail dl .rift-inbox-case-row {
   grid-template-columns: 112px minmax(0, 1fr) auto;
   align-items: center;

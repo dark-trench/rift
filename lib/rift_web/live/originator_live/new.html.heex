@@ -45,6 +45,10 @@
       </div>
 
       <nav class="rift-nav" aria-label="Request types">
+        <.link class="rift-nav-item" navigate={my_cases_path(@prefix)}>
+          <span>My cases</span>
+          <strong>{@originator_case_count}</strong>
+        </.link>
         <.link class={new_request_class(@selected_case_entry)} patch={new_case_path(@prefix)}>
           <span>All requests</span>
           <strong>{@case_type_count}</strong>

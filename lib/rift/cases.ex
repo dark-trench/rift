@@ -34,6 +34,24 @@ defmodule Rift.Cases do
   end
 
   @doc """
+  Lists cases opened by an originator in the current tenant.
+  """
+  @spec list_originator_cases(%{
+          required(:opened_by_ref) => String.t(),
+          optional(:tenant_key) => String.t() | nil
+        }) :: [Case.t()]
+  def list_originator_cases(%{opened_by_ref: opened_by_ref} = opts)
+      when is_binary(opened_by_ref) do
+    tenant_key = Map.get(opts, :tenant_key)
+
+    Case
+    |> where([rift_case], rift_case.opened_by_ref == ^opened_by_ref)
+    |> where_tenant(tenant_key)
+    |> order_by([rift_case], desc: rift_case.updated_at)
+    |> Repo.get().all()
+  end
+
+  @doc """
   Fetches a single case visible in the operator inbox.
   """
   @spec fetch_inbox_case(Ecto.UUID.t(), %{

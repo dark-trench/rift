@@ -207,6 +207,40 @@ defmodule Rift.CasesTest do
     end
   end
 
+  describe "list_originator_cases/1" do
+    test "lists cases opened by the actor in the tenant" do
+      assert {:ok, access_case} =
+               Cases.open_case(%{
+                 tenant_key: "tenant-1",
+                 type: "access_change",
+                 subject: "Access change",
+                 team: "identity",
+                 opened_by_ref: "originator-1"
+               })
+
+      assert {:ok, _same_tenant_other_actor_case} =
+               Cases.open_case(%{
+                 tenant_key: "tenant-1",
+                 type: "access_change",
+                 subject: "Other actor",
+                 opened_by_ref: "originator-2"
+               })
+
+      assert {:ok, _same_actor_other_tenant_case} =
+               Cases.open_case(%{
+                 tenant_key: "tenant-2",
+                 type: "access_change",
+                 subject: "Other tenant",
+                 opened_by_ref: "originator-1"
+               })
+
+      assert Cases.list_originator_cases(%{
+               tenant_key: "tenant-1",
+               opened_by_ref: "originator-1"
+             }) == [access_case]
+    end
+  end
+
   describe "fetch_inbox_case/2" do
     test "fetches an open case for the tenant and available case type" do
       assert {:ok, rift_case} =

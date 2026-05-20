@@ -511,6 +511,85 @@ body {
   height: 16px;
 }
 
+.rift-list-filters {
+  border-bottom: 1px solid var(--rift-border);
+  padding: 12px 28px;
+  display: flex;
+  justify-content: flex-end;
+  background: var(--rift-surface);
+}
+
+.rift-filter-menu-shell {
+  position: relative;
+}
+
+.rift-filter-button {
+  border: 1px solid var(--rift-border-strong);
+  min-height: 34px;
+  border-radius: 999px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--rift-chip);
+  color: var(--rift-heading);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.rift-filter-button:hover,
+.rift-filter-button[aria-expanded="true"] {
+  background: var(--rift-hover);
+}
+
+.rift-filter-icon {
+  width: 15px;
+  height: 15px;
+  color: var(--rift-muted);
+}
+
+.rift-filter-chevron {
+  width: 14px;
+  height: 14px;
+  color: var(--rift-soft);
+}
+
+.rift-filter-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 170px;
+  border: 1px solid var(--rift-border-strong);
+  border-radius: 8px;
+  padding: 6px;
+  display: grid;
+  gap: 2px;
+  background: var(--rift-surface);
+  box-shadow: 0 18px 42px var(--rift-shadow);
+}
+
+.rift-filter-option {
+  border: 0;
+  min-height: 32px;
+  border-radius: 6px;
+  padding: 0 9px;
+  background: transparent;
+  color: var(--rift-heading);
+  font: inherit;
+  font-size: 0.86rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rift-filter-option:hover,
+.rift-filter-option-active {
+  background: var(--rift-hover);
+  color: var(--rift-heading);
+}
+
 .rift-case-detail dl .rift-inbox-case-row {
   grid-template-columns: 112px minmax(0, 1fr) auto;
   align-items: center;
@@ -688,6 +767,30 @@ body {
   --hero-magnifying-glass: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m21%2021-5.197-5.197m0%200A7.5%207.5%200%201%200%205.196%205.196a7.5%207.5%200%200%200%2010.607%2010.607Z%22%2F%3E%3C%2Fsvg%3E');
   -webkit-mask: var(--hero-magnifying-glass);
   mask: var(--hero-magnifying-glass);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background-color: currentColor;
+  display: inline-block;
+}
+
+.hero-funnel {
+  --hero-funnel: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22M12%203c2.755%200%205.455.232%208.083.678.533.09.917.556.917%201.096%200%20.367-.11.716-.314%201.005L15%2012.75V18a.75.75%200%200%201-.328.624l-3%202A.75.75%200%200%201%2010.5%2020v-7.25L4.314%205.78A1.125%201.125%200%200%201%204%204.774c0-.54.384-1.006.917-1.096A48.32%2048.32%200%200%201%2012%203Z%22%2F%3E%3C%2Fsvg%3E');
+  -webkit-mask: var(--hero-funnel);
+  mask: var(--hero-funnel);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  background-color: currentColor;
+  display: inline-block;
+}
+
+.hero-chevron-down {
+  --hero-chevron-down: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20fill%3D%22none%22%20viewBox%3D%220%200%2024%2024%22%20stroke-width%3D%221.5%22%20stroke%3D%22currentColor%22%20aria-hidden%3D%22true%22%20data-slot%3D%22icon%22%3E%20%20%3Cpath%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20d%3D%22m19.5%208.25-7.5%207.5-7.5-7.5%22%2F%3E%3C%2Fsvg%3E');
+  -webkit-mask: var(--hero-chevron-down);
+  mask: var(--hero-chevron-down);
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
