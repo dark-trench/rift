@@ -173,8 +173,5 @@ Before opening a pull request, run:
 mix precommit
 ```
 
-To smoke test Rift as a dependency mounted inside a host app, run:
-
-```sh
-mix example.smoke
-```
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contributor workflow,
+including how to use `examples/standalone` for feature development and QA.
