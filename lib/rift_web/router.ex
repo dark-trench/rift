@@ -1,5 +1,6 @@
 defmodule RiftWeb.Router do
   use RiftWeb, :router
+  use Rift.Router
 
   pipeline :browser do
     plug :accepts, ["html"]
@@ -38,6 +39,15 @@ defmodule RiftWeb.Router do
   # end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
+  if Application.compile_env(:rift, :test_routes, false) do
+    scope "/" do
+      pipe_through :browser
+
+      rift("/rift", otp_app: :rift, resolver: Rift.Test.Resolver)
+      rift_originator("/cases", otp_app: :rift, resolver: Rift.Test.Resolver)
+    end
+  end
+
   if Application.compile_env(:rift, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put
     # it behind authentication and allow only admins to access it.

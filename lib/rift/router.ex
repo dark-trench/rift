@@ -99,10 +99,15 @@ defmodule Rift.Router do
     resolver = Keyword.fetch!(opts, :resolver)
     session_name = Keyword.get(opts, :as, default_as)
 
-    session_opts = [
+    base_opts = [
       session: {__MODULE__, :__session__, [prefix, otp_app, resolver]},
       root_layout: {RiftWeb.Layouts, :root}
     ]
+
+    session_opts =
+      if default_as == :rift,
+        do: [{:on_mount, [{Rift.LiveAuth, :require_operator}]} | base_opts],
+        else: base_opts
 
     {session_name, session_opts, as: session_name}
   end

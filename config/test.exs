@@ -7,7 +7,8 @@ import Config
 # Run `mix help test` for more information.
 config :rift,
   repo: Rift.Test.Repo,
-  ecto_repos: [Rift.Test.Repo]
+  ecto_repos: [Rift.Test.Repo],
+  test_routes: true
 
 config :rift, Rift.Test.Repo,
   username: "postgres",

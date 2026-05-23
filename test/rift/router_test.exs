@@ -90,10 +90,19 @@ defmodule Rift.RouterTest do
     assert session_name == :rift
     assert route_opts == [as: :rift]
 
+    assert session_opts[:on_mount] == [{Rift.LiveAuth, :require_operator}]
+
     assert session_opts[:session] ==
              {Rift.Router, :__session__, ["/ops/rift", :rift, TestResolver]}
 
     assert session_opts[:root_layout] == {RiftWeb.Layouts, :root}
+  end
+
+  test "__options__/3 does not add on_mount to the originator surface" do
+    {_name, session_opts, _route_opts} =
+      Rift.Router.__options__("/cases", [otp_app: :rift, resolver: TestResolver], :rift_originator)
+
+    refute Keyword.has_key?(session_opts, :on_mount)
   end
 
   test "__session__/4 resolves host context through the configured resolver" do
