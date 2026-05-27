@@ -1,5 +1,5 @@
 defmodule RiftWeb.CaseLiveTest do
-  use RiftWeb.LiveCase
+  use RiftWeb.LiveCase, async: false
 
   @fake_id Ecto.UUID.generate()
 

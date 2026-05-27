@@ -1,5 +1,5 @@
 defmodule RiftWeb.InboxLiveTest do
-  use RiftWeb.LiveCase
+  use RiftWeb.LiveCase, async: false
 
   describe "access boundary" do
     test "mounts for operator", %{conn: conn} do

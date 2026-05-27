@@ -43,8 +43,17 @@ defmodule RiftWeb.Router do
     scope "/" do
       pipe_through :browser
 
-      rift("/rift", otp_app: :rift, resolver: Rift.Test.Resolver)
-      rift_originator("/cases", otp_app: :rift, resolver: Rift.Test.Resolver)
+      rift("/rift",
+        otp_app: :rift,
+        resolver: Rift.Test.Resolver,
+        root_layout: {RiftWeb.Layouts, :root}
+      )
+
+      rift_originator("/cases",
+        otp_app: :rift,
+        resolver: Rift.Test.Resolver,
+        root_layout: {RiftWeb.Layouts, :root}
+      )
     end
   end
 

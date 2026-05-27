@@ -1,5 +1,5 @@
 defmodule RiftWeb.OriginatorLiveTest do
-  use RiftWeb.LiveCase
+  use RiftWeb.LiveCase, async: false
 
   describe "access boundary" do
     test "mounts for originator", %{conn: conn} do
@@ -12,7 +12,9 @@ defmodule RiftWeb.OriginatorLiveTest do
       assert html =~ "New request"
     end
 
-    test "mounts for unauthenticated request (resolver defaults to originator access)", %{conn: conn} do
+    test "mounts for unauthenticated request (resolver defaults to originator access)", %{
+      conn: conn
+    } do
       {:ok, _view, html} = live(conn, "/cases/new")
       assert html =~ "New request"
     end
