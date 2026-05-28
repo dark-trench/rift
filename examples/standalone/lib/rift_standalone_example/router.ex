@@ -20,11 +20,16 @@ defmodule RiftStandaloneExample.Router do
   scope "/" do
     pipe_through(:browser)
 
-    rift("/rift", otp_app: :rift_standalone_example, resolver: RiftStandaloneExample.Resolver)
+    rift("/rift",
+      otp_app: :rift_standalone_example,
+      resolver: RiftStandaloneExample.Resolver,
+      root_layout: {RiftWeb.Layouts, :root}
+    )
 
     rift_originator("/cases",
       otp_app: :rift_standalone_example,
-      resolver: RiftStandaloneExample.Resolver
+      resolver: RiftStandaloneExample.Resolver,
+      root_layout: {RiftWeb.Layouts, :root}
     )
   end
 end
