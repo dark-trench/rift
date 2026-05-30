@@ -1,8 +1,5 @@
-<div align="center">
-  <h2>Rift—LiveView ops inbox for human workflow decisions</h2>
-  
-  <img width="300" alt="rift-logo" src="https://github.com/user-attachments/assets/5ed2212b-e241-4533-b02e-a32fd151bd0f" />
-
+<div align="left">
+  <h1>Rift</h1>
   <p>
     <a href="https://github.com/dark-trench/rift/actions/workflows/ci.yml">
       <img alt="CI" src="https://img.shields.io/github/actions/workflow/status/dark-trench/rift/ci.yml?branch=main&label=ci" />
