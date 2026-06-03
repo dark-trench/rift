@@ -32,7 +32,7 @@ defmodule Mix.Tasks.Rift.InstallTest do
     assert migration =~ "add :tenant_key, :string"
     assert migration =~ "add :status, :string"
     assert migration =~ "add :details, :map"
-    assert migration =~ "add :squid_mesh_run_id, :binary_id"
+    assert migration =~ "add :squidie_run_id, :binary_id"
     assert migration =~ "create table(:rift_case_events, primary_key: false)"
 
     assert migration =~

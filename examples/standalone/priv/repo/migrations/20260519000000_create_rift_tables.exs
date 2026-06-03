@@ -13,7 +13,7 @@ defmodule RiftStandaloneExample.Repo.Migrations.CreateRiftTables do
       add :assignee_ref, :string
       add :state, :map, null: false, default: %{}
       add :details, :map, null: false, default: %{}
-      add :squid_mesh_run_id, :binary_id
+      add :squidie_run_id, :binary_id
 
       timestamps(type: :utc_datetime_usec)
     end
@@ -23,7 +23,7 @@ defmodule RiftStandaloneExample.Repo.Migrations.CreateRiftTables do
     create index(:rift_cases, [:status])
     create index(:rift_cases, [:team])
     create index(:rift_cases, [:assignee_ref])
-    create index(:rift_cases, [:squid_mesh_run_id])
+    create index(:rift_cases, [:squidie_run_id])
     create index(:rift_cases, [:updated_at])
 
     create table(:rift_case_events, primary_key: false) do

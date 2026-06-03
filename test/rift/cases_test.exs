@@ -62,7 +62,7 @@ defmodule Rift.CasesTest do
       assert rift_case.assignee_ref == nil
       assert rift_case.details == %{"role" => "admin"}
       assert rift_case.state == %{"payload" => %{"target_user_id" => "user-grace"}}
-      assert rift_case.squid_mesh_run_id == nil
+      assert rift_case.squidie_run_id == nil
 
       assert [%Event{} = event] = Rift.Repo.get().all(Event)
       assert event.case_id == rift_case.id
@@ -138,7 +138,7 @@ defmodule Rift.CasesTest do
       assert rift_case.team == "identity"
       assert rift_case.opened_by_ref == "originator-1"
       assert rift_case.tenant_key == "tenant-1"
-      assert rift_case.squid_mesh_run_id == nil
+      assert rift_case.squidie_run_id == nil
 
       assert rift_case.details == %{
                "opened_by" => "originator-1",

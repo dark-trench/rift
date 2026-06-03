@@ -4,7 +4,7 @@ defmodule Rift.CaseType do
 
   A case type describes the human form Rift renders, plus the workflow and
   payload mapping the host app owns. Rift does not derive these fields from
-  Squid Mesh workflow modules.
+  Squidie workflow modules.
   """
 
   alias Rift.CaseType.Field
@@ -28,25 +28,25 @@ defmodule Rift.CaseType do
   @doc "Returns the host-defined form fields Rift should render."
   @callback fields() :: [Field.t()]
 
-  @doc "Returns the Squid Mesh workflow module Rift should start."
+  @doc "Returns the Squidie workflow module Rift should start."
   @callback workflow() :: module()
 
-  @doc "Returns the Squid Mesh trigger used when opening the case."
+  @doc "Returns the Squidie trigger used when opening the case."
   @callback trigger() :: atom()
 
-  @doc "Maps validated Rift form attributes into a Squid Mesh payload."
+  @doc "Maps validated Rift form attributes into a Squidie payload."
   @callback build_payload(attrs :: map(), ctx :: term()) :: map()
 
   @doc "Runs after Rift has opened the case and started the workflow."
   @callback after_opened(rift_case :: term(), ctx :: term()) :: hook_result()
 
-  @doc "Runs after the approval action has succeeded in Squid Mesh."
+  @doc "Runs after the approval action has succeeded in Squidie."
   @callback after_approved(rift_case :: term(), ctx :: term()) :: hook_result()
 
-  @doc "Runs after the rejection action has succeeded in Squid Mesh."
+  @doc "Runs after the rejection action has succeeded in Squidie."
   @callback after_rejected(rift_case :: term(), ctx :: term()) :: hook_result()
 
-  @doc "Runs after the cancellation action has succeeded in Squid Mesh."
+  @doc "Runs after the cancellation action has succeeded in Squidie."
   @callback after_cancelled(rift_case :: term(), ctx :: term()) :: hook_result()
 
   @doc "Runs after Rift assigns the case to an actor."

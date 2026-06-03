@@ -2,7 +2,7 @@
 
 ## Motivation
 
-Squid Mesh is a strong use case for Jido, but it also needs a strong use case of
+Squidie is a strong use case for Jido, but it also needs a strong use case of
 its own. Rift is that dogfood app: a real human-operated surface that puts
 pressure on the runtime through approvals, rejections, cancellation, ownership,
 audit timelines, side effects, stale operator actions, failed side effects, and
@@ -12,7 +12,7 @@ Rift should be useful on its own, not only as a demo. The goal is to give
 Phoenix apps an embeddable ops inbox for work that needs human decisions while
 letting the host app keep domain ownership.
 
-Rift owns the human-facing ops surface. Squid Mesh owns durable workflow
+Rift owns the human-facing ops surface. Squidie owns durable workflow
 execution. SquidSonar owns runtime inspection. The host app owns auth, actors,
 tenancy, teams, domain data, selectable values, file storage, side effects, and
 workflow modules.
@@ -66,12 +66,12 @@ Implemented:
 
 Still planned for V1:
 
-- Starting the configured Squid Mesh workflow during case opening and storing
-  `squid_mesh_run_id`.
+- Starting the configured Squidie workflow during case opening and storing
+  `squidie_run_id`.
 - Workflow start failure handling and retry-safe case state.
 - Claim, release, assign, approve, reject, and cancel actions.
 - Lifecycle hook execution after accepted runtime actions.
-- Runtime status reconciliation from Squid Mesh run inspection.
+- Runtime status reconciliation from Squidie run inspection.
 - Comments, attachment references, event timelines, and internal notes.
 - Private read receipts and unread filters.
 - SquidSonar link or embed for runtime inspection.
@@ -79,19 +79,19 @@ Still planned for V1:
 
 ## Core Model
 
-Each Rift case maps to exactly one Squid Mesh workflow run.
+Each Rift case maps to exactly one Squidie workflow run.
 
 ```text
 Rift Case
   human-facing object:
   who opened it, what it is about, status, owner, comments, attachments, timeline
 
-Squid Mesh Run
+Squidie Run
   execution object:
   steps, retries, pauses, approval gates, compensation, failures, diagnostics
 ```
 
-Rift never introspects Squid Mesh workflow modules to build forms. The host app
+Rift never introspects Squidie workflow modules to build forms. The host app
 provides a small case type adapter that describes the human form and maps
 submitted data into the workflow payload.
 
@@ -112,8 +112,8 @@ On submit, Rift:
 
 The remaining V1 submit path should then:
 
-1. Start the configured Squid Mesh workflow and trigger.
-2. Store `squid_mesh_run_id`.
+1. Start the configured Squidie workflow and trigger.
+2. Store `squidie_run_id`.
 3. Append `workflow_started`.
 4. Run `after_opened`.
 5. Redirect to the case detail page.
@@ -152,7 +152,7 @@ Planned filters:
 
 The implemented case detail page is an operator-facing submitted-data shell. The
 V1 detail page should show the full event timeline, internal notes, ownership
-controls, linked Squid Mesh run status, current waiting reason,
+controls, linked Squidie run status, current waiting reason,
 approve/reject/cancel actions, side-effect failures, and a SquidSonar link or
 embed.
 
@@ -305,9 +305,9 @@ The important boundary:
 
 - `case_type do ... end` declares the stable type, UI copy, queue/team,
   workflow module, trigger, and human form fields.
-- `build_payload/2` maps submitted form data into the Squid Mesh payload.
+- `build_payload/2` maps submitted form data into the Squidie payload.
 - Lifecycle hooks run host side effects after Rift accepts an action.
-- Rift never derives forms from Squid Mesh workflow modules.
+- Rift never derives forms from Squidie workflow modules.
 
 Supported v1 field types:
 
@@ -325,7 +325,7 @@ Select options may be static or resolved by `Rift.Resolver`.
 ## Tables
 
 Rift installs its current case and event tables with `mix rift.install`,
-following the same host-migration pattern used by Squid Mesh. Read receipts are
+following the same host-migration pattern used by Squidie. Read receipts are
 planned as a follow-up schema.
 
 ### `rift_cases`
@@ -342,7 +342,7 @@ Fields:
 - `assignee_ref :string`
 - `state :map`
 - `details :map`
-- `squid_mesh_run_id :binary_id`
+- `squidie_run_id :binary_id`
 - timestamps
 
 Indexes:
@@ -352,7 +352,7 @@ Indexes:
 - `status`
 - `team`
 - `assignee_ref`
-- `squid_mesh_run_id`
+- `squidie_run_id`
 - `updated_at`
 
 ### `rift_case_events`
@@ -444,7 +444,7 @@ V1 statuses:
 - `completed`
 
 Status is cached on `rift_cases` for inbox performance and reconciled from
-Squid Mesh run inspection on case detail reads.
+Squidie run inspection on case detail reads.
 
 ## Lifecycle Hooks
 
@@ -463,7 +463,7 @@ Hook return values:
 - `{:ok, map()}`
 - `{:error, term()}`
 
-Approve, reject, and cancel call Squid Mesh first. Hooks run only after the
+Approve, reject, and cancel call Squidie first. Hooks run only after the
 runtime action succeeds.
 
 Hook failures do not rollback accepted runtime actions. Rift appends
@@ -475,7 +475,7 @@ operator inbox.
 ### Access Change
 
 An employee opens an access-change case. The form asks for a target user, role,
-and reason. The Squid Mesh workflow pauses for operator approval. If approved,
+and reason. The Squidie workflow pauses for operator approval. If approved,
 the workflow applies the access change and Rift records the approval side
 effect. If rejected, Rift triggers the host notification hook.
 
@@ -508,7 +508,7 @@ Implemented test coverage includes:
 
 Remaining V1 tests should cover:
 
-- Squid Mesh start success and Squid Mesh start failure.
+- Squidie start success and Squidie start failure.
 - Claim, release, assign, approve, reject, cancel, and status reconciliation.
 - Lifecycle hook success and failure.
 - Action inbox filters, detail timeline visibility, ownership controls,
@@ -519,7 +519,7 @@ Remaining V1 tests should cover:
   one cancellation hook, SquidSonar mounted, and the full open -> claim -> wait
   -> approve/reject/cancel -> inspect flow.
 
-Stress scenarios for Squid Mesh:
+Stress scenarios for Squidie:
 
 - Concurrent case openings.
 - Duplicate submissions.
@@ -535,6 +535,6 @@ Stress scenarios for Squid Mesh:
 - Rift should expose enough context for host hooks without making host domain
   data part of Rift's schema.
 - Rift should avoid becoming a standalone workflow engine. Case state supports
-  human UX; Squid Mesh remains the execution source of truth.
+  human UX; Squidie remains the execution source of truth.
 - Rift should stay useful even when SquidSonar is not mounted, but the best
   operator experience should include SquidSonar runtime inspection.
