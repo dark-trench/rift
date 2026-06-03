@@ -37,7 +37,7 @@ defmodule Rift.Cases.Case do
     field :assignee_ref, :string
     field :state, :map, default: %{}
     field :details, :map, default: %{}
-    field :squid_mesh_run_id, Ecto.UUID
+    field :squidie_run_id, Ecto.UUID
 
     has_many :events, Event, foreign_key: :case_id
 
@@ -57,7 +57,7 @@ defmodule Rift.Cases.Case do
       :assignee_ref,
       :state,
       :details,
-      :squid_mesh_run_id
+      :squidie_run_id
     ])
     |> validate_required([:type, :subject, :status, :opened_by_ref])
     |> validate_inclusion(:status, @statuses)

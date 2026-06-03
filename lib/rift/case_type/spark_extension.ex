@@ -94,12 +94,12 @@ defmodule Rift.CaseType.SparkExtension do
     workflow: [
       type: :atom,
       required: true,
-      doc: "The Squid Mesh workflow module Rift should start."
+      doc: "The Squidie workflow module Rift should start."
     ],
     trigger: [
       type: :atom,
       required: true,
-      doc: "The Squid Mesh trigger used when opening the case."
+      doc: "The Squidie trigger used when opening the case."
     ]
   ]
 

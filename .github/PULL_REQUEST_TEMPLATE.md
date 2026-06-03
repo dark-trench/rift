@@ -23,7 +23,7 @@
 ```mermaid
 flowchart LR
     Host[Host Phoenix App] --> Rift[Rift Ops Inbox]
-    Rift --> Mesh[Squid Mesh Workflow]
+    Rift --> Mesh[Squidie Workflow]
 ```
 
 ---
